@@ -2,6 +2,8 @@
 //   1. Latest YouTube upload   -> src/content/latest-video.json  (+ public/img/latest-video.jpg)
 //   2. Latest releases         -> src/content/releases.auto.json (+ public/img/releases/*.jpg)
 //      Source order: Spotify (needs SPOTIFY_CLIENT_ID + SPOTIFY_CLIENT_SECRET) -> Apple Music/iTunes (no key).
+//   3. Gallery from Instagram -> src/content/gallery.json (+ public/img/gallery/*.jpg)
+//      Needs INSTAGRAM_ACCESS_TOKEN (Instagram API, system-user token from Meta Unified login; never put it in the repo). Otherwise placeholders stay.
 // Nothing here may break the build: every step is wrapped, and the previous/default files are kept on failure.
 // Images are downloaded and served from our own domain, so the strict CSP (img-src 'self') still holds.
 import { writeFile, readFile, mkdir } from 'node:fs/promises';
@@ -23,7 +25,7 @@ const log = (...a) => console.log('[fetch-data]', ...a);
 const safeId = (s) => /^[A-Za-z0-9_-]{11}$/.test(s || '');
 const getJson = async (url, opts = {}) => {
   const r = await fetch(url, { ...opts, headers: { 'User-Agent': UA, ...(opts.headers || {}) }, signal: AbortSignal.timeout(15000) });
-  if (!r.ok) throw new Error(`${r.status} ${url}`);
+  if (!r.ok) throw new Error(`${r.status} ${String(url).split('?')[0]}`);
   return r.json();
 };
 const getText = async (url) => {
@@ -136,6 +138,48 @@ async function latestReleases() {
   return out;
 }
 
+
+// ---------- Instagram gallery ----------
+const GALLERY_COUNT = 6;
+export function mapInstagram(items) {
+  return (items || [])
+    .filter((m) => m && (m.media_type === 'IMAGE' || m.media_type === 'CAROUSEL_ALBUM') && m.media_url && /^https:\/\//.test(m.media_url))
+    .sort((a, b) => String(b.timestamp).localeCompare(String(a.timestamp)))
+    .slice(0, GALLERY_COUNT)
+    .map((m) => ({
+      mediaUrl: m.media_url,
+      url: /^https:\/\/(www\.)?instagram\.com\//.test(m.permalink || '') ? m.permalink : '',
+      alt: ((m.caption || '').replace(/[#@]\S+/g, '').replace(/\s+/g, ' ').trim().slice(0, 110)) || 'Photo of TiMO ODV',
+    }));
+}
+async function instagramGallery() {
+  const token = env.INSTAGRAM_ACCESS_TOKEN;
+  if (!token) throw new Error('no INSTAGRAM_ACCESS_TOKEN');
+  // Token goes in a header, never the URL, so it can't leak into build logs via error messages.
+  const headers = { Authorization: `Bearer ${token}` };
+  const fields = 'id,media_type,media_url,permalink,timestamp,caption';
+  const igId = String(env.INSTAGRAM_USER_ID || '17841401089795120').replace(/\D/g, '');
+  // Unified-login (system-user) tokens may work on either host; try both, keep the first that answers.
+  const endpoints = [
+    `https://graph.instagram.com/v21.0/me/media?fields=${fields}&limit=40`,
+    `https://graph.facebook.com/v21.0/${igId}/media?fields=${fields}&limit=40`,
+  ];
+  let data = null;
+  for (const url of endpoints) {
+    try { data = await getJson(url, { headers }); break; }
+    catch (e) { log('instagram endpoint failed:', e.message.replace(/\?.*$/, '')); }
+  }
+  if (!data) throw new Error('instagram: no endpoint accepted the token');
+  const picks = mapInstagram(data.data);
+  const out = [];
+  for (const [i, m] of picks.entries()) {
+    const file = `gallery/ig-${i + 1}.jpg`;
+    await download(m.mediaUrl, path.join(IMG, file), 5000); // any failure aborts: never publish a half-broken gallery
+    out.push({ src: `/img/${file}`, alt: m.alt, url: m.url });
+  }
+  return out.length === GALLERY_COUNT ? out : null; // fewer than 6 usable photos -> keep placeholders
+}
+
 // ---------- run ----------
 async function step(name, file, fn, fallback) {
   const target = path.join(CONTENT, file);
@@ -150,4 +194,5 @@ async function step(name, file, fn, fallback) {
 if (import.meta.url === `file://${process.argv[1]}`) {
   await step('latest video', 'latest-video.json', latestVideo, { id: site.featuredVideoId || '', title: '', published: '', thumb: '' });
   await step('releases', 'releases.auto.json', latestReleases, []);
+  await step('instagram gallery', 'gallery.json', instagramGallery, []);
 }

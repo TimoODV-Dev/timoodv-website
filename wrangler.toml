@@ -7,4 +7,4 @@ pages_build_output_dir = "dist"
 # Secrets (Pages -> Settings -> Variables and Secrets):
 #   TURNSTILE_SECRET, RESEND_API_KEY, BOOKING_TO_EMAIL, BOOKING_FROM_EMAIL
 # Build variables (used at build time only):
-#   PUBLIC_TURNSTILE_SITEKEY, SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET (optional), YOUTUBE_CHANNEL_ID (optional)
+#   PUBLIC_TURNSTILE_SITEKEY, INSTAGRAM_ACCESS_TOKEN, SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET (optional), YOUTUBE_CHANNEL_ID (optional)

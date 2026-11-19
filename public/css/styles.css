@@ -461,3 +461,5 @@ button { font: inherit; color: inherit; }
 .legal p, .legal li { color: var(--ink-2); max-width: 68ch; }
 .legal p + p { margin-top: 1rem; }
 .legal a { color: var(--ink); }
+
+.gallery__item a { display: block; width: 100%; height: 100%; }
