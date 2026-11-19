@@ -1,18 +1,17 @@
 {
-  "photoCredit": "",
   "records": [
     {
       "title": "Save Me",
-      "level": "Gold",
+      "level": "Platinum",
       "year": "2015"
     },
     {
       "title": "I Need You",
-      "level": ""
+      "level": "Platinum"
     },
     {
       "title": "Move",
-      "level": ""
+      "level": "Platinum"
     },
     {
       "title": "Origins",
@@ -24,6 +23,10 @@
     },
     {
       "title": "Find My Way",
+      "level": "Platinum"
+    },
+    {
+      "title": "Dancing Again",
       "level": "Platinum"
     }
   ]
