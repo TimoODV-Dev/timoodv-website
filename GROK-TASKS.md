@@ -15,6 +15,11 @@ These are the standing instructions for Grok's two daily tasks. Follow them exac
 - `src/content/stats.manual.json` (task A2).
 - `src/content/records.json`: a record's `level` (Gold, Platinum or Multi-Platinum), `year`, or optional direct links (`links.spotify`, `links.apple`, `links.youtube`), or a new record, only when Tim gives you the facts. Never invent a level or a year. If it is not confirmed, leave the level empty and the site shows "Certified record".
 - `src/content/accolades.json`: only items Tim confirms are true (award, year, source).
+- `src/content/bio.md` (the Story text): only when Tim asks for a change. Show Tim the exact new text first and publish only after his yes. Keep it factual: never add awards, numbers, dates or claims Tim has not confirmed, and no links, HTML or contact details. The first paragraph is displayed larger.
+- `src/content/releases.json`: a manual fallback list of releases, used only if the automatic lookup returns nothing. Edit it only when Tim asks. Releases normally update themselves every night, so do not add releases by hand otherwise.
+
+## Booking email addresses are not yours to change
+The addresses that receive booking enquiries are a Cloudflare secret (`BOOKING_TO_EMAIL`), not part of the repository, and this repository is public. Never put email addresses in the repository. Only Tim changes them, in the Cloudflare dashboard. If Tim asks you to change them, tell him how to do it himself (Cloudflare → Workers & Pages → timoodv-website → Settings → Variables and Secrets) and do nothing else.
 
 ## What you must never change
 Anything else: styles, layout, scripts, workflows, `functions/`, `server/`, `public/_headers`, `wrangler.toml`, DNS, email settings, secrets, or the site's security rules. If something there looks wrong, **tell Tim** and describe it. Do not fix it.
