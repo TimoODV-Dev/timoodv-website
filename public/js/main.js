@@ -40,6 +40,28 @@
     });
   });
 
+  // Releases: tapping a cover opens a "Listen on" chooser (Spotify / Apple Music / YouTube Music).
+  // Without JS the cover is still a normal link to the release.
+  const releaseItems = [...document.querySelectorAll('[data-release]')];
+  const closeReleases = (except) => releaseItems.forEach((li) => {
+    if (li === except) return;
+    const box = li.querySelector('[data-release-chooser]'); const a = li.querySelector('[data-release-toggle]');
+    if (box) box.hidden = true; if (a) a.setAttribute('aria-expanded', 'false');
+  });
+  releaseItems.forEach((li) => {
+    const a = li.querySelector('[data-release-toggle]'); const box = li.querySelector('[data-release-chooser]');
+    if (!a || !box) return;
+    a.addEventListener('click', (e) => {
+      e.preventDefault();
+      const open = box.hidden;
+      closeReleases(li);
+      box.hidden = !open; a.setAttribute('aria-expanded', String(open));
+      if (open) box.querySelector('a')?.focus();
+    });
+  });
+  document.addEventListener('click', (e) => { if (!e.target.closest('[data-release]')) closeReleases(); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeReleases(); });
+
   // Footer year
   document.querySelectorAll('[data-year]').forEach((n) => { n.textContent = new Date().getFullYear(); });
 

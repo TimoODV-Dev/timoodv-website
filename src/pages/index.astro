@@ -11,6 +11,16 @@ import { Content as Bio } from '../content/bio.md';
 
 // Latest releases come from Spotify / Apple Music at build time; releases.json is a manual fallback.
 const releases = (autoReleases.length ? autoReleases : manualReleases).slice(0, 4);
+// Per-release platform links. The release's own URL is exact for its source platform; the others fall back to a search for the title.
+const platformLinks = (r: { title: string; url?: string }) => {
+  const q = encodeURIComponent(`${r.title} TiMO ODV`);
+  const u = r.url || '';
+  return [
+    { id: 'spotify', name: 'Spotify', icon: 'i-spotify', href: /^https:\/\/open\.spotify\.com\//.test(u) ? u : `https://open.spotify.com/search/${q}` },
+    { id: 'apple', name: 'Apple Music', icon: 'i-applemusic', href: /^https:\/\/music\.apple\.com\//.test(u) ? u : `https://music.apple.com/za/search?term=${q}` },
+    { id: 'ytm', name: 'YouTube Music', icon: 'i-youtube', href: `https://music.youtube.com/search?q=${q}` },
+  ];
+};
 const videoTitle = video.title || 'Latest video';
 const videoId = /^[A-Za-z0-9_-]{11}$/.test(video.id || '') ? video.id : '';
 const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -80,13 +90,22 @@ const turnstileKey = import.meta.env.PUBLIC_TURNSTILE_SITEKEY || '';
       {releases.length ? (
       <ul class="release-grid">
         {releases.map((r) => (
-          <li class="release">
-            <a class="release__link" href={r.url} rel="noopener noreferrer" target="_blank">
+          <li class="release" data-release>
+            <a class="release__link" href={r.url} rel="noopener noreferrer" target="_blank" aria-haspopup="true" aria-expanded="false" data-release-toggle>
               <span class="release__cover"><img src={r.cover} alt={`Cover art for ${r.title}`} width="600" height="600" loading="lazy"></span>
               <span class="release__type">{r.type} · {r.year}</span>
               <span class="release__title">{r.title}</span>
               {r.label && <span class="release__label">{r.label}</span>}
             </a>
+            <div class="release__chooser" role="group" aria-label={`Listen to ${r.title} on`} hidden data-release-chooser>
+              <p class="release__chooser-title">Listen on</p>
+              {platformLinks(r).map((pl) => (
+                <a class="release__platform" href={pl.href} rel="noopener noreferrer" target="_blank">
+                  <svg class="release__platform-icon" aria-hidden="true"><use href={`#${pl.icon}`}/></svg>
+                  <span>{pl.name}</span>
+                </a>
+              ))}
+            </div>
           </li>
         ))}
       </ul>
