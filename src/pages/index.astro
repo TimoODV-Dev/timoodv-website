@@ -1,22 +1,24 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import bio from '../content/bio.md?raw';
-import site from '../content/site.json';
 import releases from '../content/releases.json';
 ---
 
 <Layout title="TiMO ODV">
   <section class="hero">
     <h1>TIMO<br>ODV</h1>
-    <div class="tag">Melodic House · Indie Dance</div>
-    <a href="#releases" class="cta">Latest Releases</a>
+    <div class="subtitle">South African DJ / Producer</div>
+    <div class="genre">Melodic House · Indie Dance</div>
+    <div class="cta-row">
+      <a href="#releases" class="cta">Latest Releases →</a>
+    </div>
   </section>
 
-  <section class="releases" id="releases">
+  <section id="releases">
     <h2>Releases</h2>
-    <ul>
-      {releases.map((r) => (
-        <li>
+    <ul style="list-style:none;padding:0">
+      {releases.map(r => (
+        <li style="padding:1.4rem 0;border-bottom:1px solid #222;display:flex;justify-content:space-between">
           <strong>{r.title}</strong>
           <span>{r.date}</span>
         </li>
@@ -31,12 +33,12 @@ import releases from '../content/releases.json';
 
   <section id="booking">
     <h2>Booking</h2>
-    <form action="/api/booking" method="POST">
-      <input type="text" name="name" required placeholder="Name" />
-      <input type="email" name="email" required placeholder="Email" />
-      <textarea name="message" required placeholder="Event details" rows="4"></textarea>
-      <input type="text" name="website" class="honeypot" tabindex="-1" />
-      <button type="submit" class="cta">Send enquiry</button>
+    <form action="/api/booking" method="POST" style="max-width:26rem;display:flex;flex-direction:column;gap:.8rem">
+      <input name="name" required placeholder="Name" style="padding:.9rem;background:#111;border:1px solid #333;color:#fff" />
+      <input name="email" type="email" required placeholder="Email" style="padding:.9rem;background:#111;border:1px solid #333;color:#fff" />
+      <textarea name="message" required placeholder="Event details" rows="4" style="padding:.9rem;background:#111;border:1px solid #333;color:#fff"></textarea>
+      <input name="website" class="honeypot" tabindex="-1" style="position:absolute;left:-9999px" />
+      <button class="cta" type="submit">Send enquiry</button>
     </form>
   </section>
 </Layout>
