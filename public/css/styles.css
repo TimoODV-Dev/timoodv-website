@@ -60,6 +60,8 @@
 
 /* ---------- Base ---------- */
 *, *::before, *::after { box-sizing: border-box; }
+/* Desktop sits at an effective 90% scale: sizes (rem) shrink 10%, the content column widens to match. */
+@media (min-width: 1100px) { html { font-size: 90%; } :root { --container: 1378px; } }
 html { scroll-behavior: smooth; scroll-padding-top: 80px; -webkit-text-size-adjust: 100%; }
 body {
   margin: 0;
