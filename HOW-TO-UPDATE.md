@@ -33,13 +33,15 @@ If a lookup fails, the previous content stays. The build never breaks because of
 
 ## One-time Cloudflare / GitHub setup
 1. Pages build command: `npm run build`, output folder `dist`.
-2. **Contact form** (all five are needed; without them the form shows "temporarily unavailable" and sends nothing):
-   - `PUBLIC_TURNSTILE_SITEKEY`: Pages **build variable** (the public site key from Cloudflare -> Turnstile -> Add widget).
-   - `TURNSTILE_SECRET`: Pages **encrypted secret** (the secret key from the same widget).
-   - `RESEND_API_KEY`: encrypted secret from resend.com (sending access only).
-   - `BOOKING_TO_EMAIL`: the inbox that gets enquiries. Until a domain is verified in Resend this must be the email address the Resend account was created with.
-   - `BOOKING_FROM_EMAIL`: `onboarding@resend.dev` until a domain is verified in Resend, then an address on that domain.
-   Add the widget hostnames in Turnstile: the live domain and `timoodv-website.pages.dev`.
+2. **Contact form** (all of these are needed; without them the form shows "temporarily unavailable" and sends nothing). Everything below is an encrypted **Secret** in Pages -> Settings -> Variables and Secrets:
+   - `TURNSTILE_SECRET`: the Secret Key of the Turnstile widget. (The public site key is in `src/content/site.json`.)
+   - `SMTP_HOST`: the mail server name from Afrihost. It must be a name that points straight at Afrihost, NOT a Cloudflare-proxied (orange cloud) name.
+   - `SMTP_PORT`: `465` (TLS) or `587` (STARTTLS). Port 25 does not work from Cloudflare.
+   - `SMTP_USER`: a dedicated sending mailbox, e.g. `website@timoodv.com`. Use a mailbox that is used for nothing else and has a long random password.
+   - `SMTP_PASS`: that mailbox's password.
+   - `BOOKING_FROM_EMAIL`: the same mailbox address.
+   - `BOOKING_TO_EMAIL`: who gets enquiries, comma-separated, e.g. `bookings@timoodv.com,adrien@ce-mgmt.com`.
+   (Optional fallback if `SMTP_HOST` is not set: `RESEND_API_KEY` sends through resend.com instead.)
 3. Optional: `SPOTIFY_CLIENT_ID` / `SPOTIFY_CLIENT_SECRET` (create an app at developer.spotify.com; needs a Premium account on the owner), and `YOUTUBE_CHANNEL_ID` if auto-detect fails.
 4. Nightly refresh: create a Pages deploy hook and save it as the GitHub secret `CF_DEPLOY_HOOK` (see `.github/workflows/refresh.yml`).
 

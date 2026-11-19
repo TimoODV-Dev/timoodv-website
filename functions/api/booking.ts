@@ -1,15 +1,23 @@
 // POST /api/booking  (Cloudflare Pages Function)
 // Honeypot, server-side validation, Turnstile verification (mandatory when configured),
-// per-IP rate limit (if a KV namespace is bound) and email delivery through Resend.
+// per-IP rate limit (if a KV namespace is bound) and email delivery through the domain's own mail server (SMTP), or Resend as a fallback.
 //
 // Secrets / bindings (Cloudflare dashboard -> Pages -> Settings):
 //   TURNSTILE_SECRET   Turnstile secret key (REQUIRED: without it the form refuses to send)
-//   RESEND_API_KEY     API key from resend.com
+//   SMTP_HOST / SMTP_PORT / SMTP_USER / SMTP_PASS   send through the domain's own mail server (preferred). Port 465 (TLS) or 587 (STARTTLS).
+//                      SMTP_USER should be a dedicated mailbox used only for this, e.g. website@timoodv.com
+//   RESEND_API_KEY     (fallback when SMTP_HOST is not set) API key from resend.com
 //   BOOKING_TO_EMAIL   destination inbox(es), comma-separated (max 5), e.g. bookings@timoodv.com,adrien@ce-mgmt.com. Until a domain is verified in Resend this must be the email the Resend account was created with
-//   BOOKING_FROM_EMAIL sender: onboarding@resend.dev until a domain is verified, then e.g. website@yourdomain
+//   BOOKING_FROM_EMAIL sender address, e.g. website@timoodv.com (with SMTP: the SMTP_USER mailbox). For Resend before a domain is verified: onboarding@resend.dev
 //   RATE_LIMIT         (optional) KV namespace binding
 
+import { sendSmtp, cloudflareConnect, type Connect } from "../../server/smtp.ts";
+
 interface Env {
+  SMTP_HOST?: string;
+  SMTP_PORT?: string;
+  SMTP_USER?: string;
+  SMTP_PASS?: string;
   TURNSTILE_SECRET?: string;
   RESEND_API_KEY?: string;
   BOOKING_TO_EMAIL?: string;
@@ -31,7 +39,7 @@ const clean = (v: FormDataEntryValue | null, max: number) =>
 const cleanBlock = (v: FormDataEntryValue | null, max: number) =>
   String(v ?? "").replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/g, "").trim().slice(0, max);
 
-export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
+export const makeHandler = (connect: Connect) => async ({ request, env }: { request: Request; env: Env }): Promise<Response> => {
   // Same-origin only.
   const origin = request.headers.get("Origin");
   if (origin && new URL(origin).host !== new URL(request.url).host) return json({ error: "Forbidden" }, 403);
@@ -91,7 +99,8 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
 
   // Never report success if the message can't actually be delivered.
   const to = recipients(env.BOOKING_TO_EMAIL);
-  if (!env.RESEND_API_KEY || !to.length || !env.BOOKING_FROM_EMAIL) {
+  const useSmtp = !!env.SMTP_HOST;
+  if (!to.length || !env.BOOKING_FROM_EMAIL || (useSmtp ? !env.SMTP_USER || !env.SMTP_PASS : !env.RESEND_API_KEY)) {
     console.error("booking: email delivery not configured");
     return json({ error: "Booking form is temporarily unavailable. Please email us directly." }, 503);
   }
@@ -103,6 +112,19 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
   lines.push("", message);
   const text = lines.join("\n");
 
+  const subject = `Booking enquiry from ${name}`.slice(0, 150);
+  if (useSmtp) {
+    try {
+      const port = parseInt(env.SMTP_PORT || "465", 10);
+      await sendSmtp({ host: env.SMTP_HOST!, port: port === 587 ? 587 : 465, user: env.SMTP_USER!, pass: env.SMTP_PASS!, from: env.BOOKING_FROM_EMAIL, fromName: "TiMO ODV website", to, replyTo: email, subject, text }, connect);
+    } catch (e) {
+      // Log the reason (never the password or the visitor's message).
+      console.error("booking: smtp error", e instanceof Error ? e.message : "unknown");
+      return json({ error: "Could not send. Please try again or email us directly." }, 502);
+    }
+    return json({ ok: true });
+  }
+
   const res = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: { Authorization: `Bearer ${env.RESEND_API_KEY}`, "Content-Type": "application/json" },
@@ -110,7 +132,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
       from: `TiMO ODV website <${env.BOOKING_FROM_EMAIL}>`,
       to,
       reply_to: email,
-      subject: `Booking enquiry from ${name}`.slice(0, 150),
+      subject,
       text,
     }),
   });
@@ -120,3 +142,5 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
   }
   return json({ ok: true });
 };
+
+export const onRequestPost: PagesFunction<Env> = (ctx) => makeHandler(cloudflareConnect)(ctx);
