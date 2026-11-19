@@ -1,7 +1,5 @@
 # The Story
 
-PLACEHOLDER — Short artist biography goes here.
+Timothy Oude Vrielink, known as TiMO ODV, is a South African producer, DJ, singer and songwriter from Kempton Park on the East Rand of Johannesburg. Self-taught in production, songwriting and vocals, he broke through in 2015 with the Universal Music South Africa single “Save Me,” which earned gold certification, dominated local charts and radio, and became one of the most-played tracks of the year.
 
-Timothy Oude Vrielink (TiMO ODV) is a Cape Town-based DJ and producer. Replace this paragraph with the approved bio text.
-
-PLACEHOLDER — Second paragraph. Career highlights, current sound, and any key achievements the client wants public.
+Subsequent releases including “Find My Way,” “I Need You,” the 2016 EP *ORIGINS*, “Dancing Again” and “Move” cemented his reputation for club-ready deep house fused with memorable vocal melodies. He has since evolved into melodic house and indie dance, releasing on Midnight Children Records with tracks such as “Me, I Dance,” “What About Us?,” “Change My Mind,” “Can’t Be Me” and “2 AM.” He continues to perform at major South African festivals (including ULTRA South Africa) while writing and producing for both the dance floor and radio.
