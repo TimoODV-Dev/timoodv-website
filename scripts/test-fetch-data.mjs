@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { parseFeed, mapSpotify, mapItunes, mapInstagram, mapYoutubeStats, mapInstagramProfile, matchRecordArt, matchRecord } from './fetch-data.mjs';
+import { parseFeed, mapSpotify, mapItunes, mapInstagram, mapYoutubeStats, mapInstagramProfile, matchRecordArt, matchRecord, clip } from './fetch-data.mjs';
 
 const feed = `<feed><entry><id>yt:video:abcDEF12345</id><yt:videoId>abcDEF12345</yt:videoId><title>New Track &amp; Video (Official)</title><published>2026-11-01T10:00:00+00:00</published></entry>
 <entry><yt:videoId>zzzzzzzzzzz</yt:videoId><title>Older</title><published>2026-01-01T10:00:00+00:00</published></entry>
@@ -42,4 +42,8 @@ const albums = [alb('Save Me (feat. Sarah Jackson) [Record of the Year Edition]'
 assert.equal(matchRecordArt(albums, 'Save Me'), 'https://is1.mzstatic.com/x/600x600bb.jpg');
 assert.ok(matchRecordArt(albums, 'Move'), 'Move found'); assert.equal(matchRecordArt([alb('Moves Like Jagger', '2011')], 'Move'), '', 'no partial-word match');
 assert.equal(matchRecord(albums, 'Save Me').year, '2015', 'earliest release year'); assert.ok(matchRecordArt(albums, 'Origins')); assert.equal(matchRecordArt(albums, 'Nope'), ''); assert.equal(matchRecordArt([{ wrapperType: 'collection', collectionName: 'Move', artworkUrl100: 'http://insecure/100x100bb.jpg' }], 'Move'), '', 'https only');
+const emoji = 'a'.repeat(109) + '😀😀';
+assert.equal(clip(emoji, 110), 'a'.repeat(109) + '😀', 'keeps whole emoji');
+assert.equal(clip('x😀', 2), 'x😀'); assert.equal(clip('a\uD83D', 5), 'a', 'drops lone surrogate');
+JSON.parse(JSON.stringify({ alt: clip(emoji, 110) })); assert.equal(clip(null, 5), '');
 console.log('fetch-data parsers: all tests passed');
