@@ -25,6 +25,7 @@ Photos: put gallery photos in `public/img/gallery/` (1600x900) and swap the plac
 Every build (every push, and every night at about 05:17 SAST) the site fetches:
 - **Latest video:** newest upload on the YouTube channel (no API key needed). The thumbnail is saved on our own domain.
 - **Latest releases:** from Spotify if `SPOTIFY_CLIENT_ID` and `SPOTIFY_CLIENT_SECRET` are set as build variables, otherwise from Apple Music (no key needed). Covers are saved on our own domain.
+- **Gallery:** his 6 newest Instagram photos (videos skipped) when the build variable `INSTAGRAM_ACCESS_TOKEN` is set. Photos are saved on our own domain and link back to the post. Until then, or if the token expires, the gallery shows placeholders. The token lasts 60 days and each nightly build tries to renew it.
 If a lookup fails, the previous content stays. The build never breaks because of it.
 
 ## One-time Cloudflare / GitHub setup

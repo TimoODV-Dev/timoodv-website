@@ -2,6 +2,8 @@
 //   1. Latest YouTube upload   -> src/content/latest-video.json  (+ public/img/latest-video.jpg)
 //   2. Latest releases         -> src/content/releases.auto.json (+ public/img/releases/*.jpg)
 //      Source order: Spotify (needs SPOTIFY_CLIENT_ID + SPOTIFY_CLIENT_SECRET) -> Apple Music/iTunes (no key).
+//   3. Gallery from Instagram -> src/content/gallery.json (+ public/img/gallery/*.jpg)
+//      Needs INSTAGRAM_ACCESS_TOKEN (Instagram API with Instagram Login, professional account). Otherwise placeholders stay.
 // Nothing here may break the build: every step is wrapped, and the previous/default files are kept on failure.
 // Images are downloaded and served from our own domain, so the strict CSP (img-src 'self') still holds.
 import { writeFile, readFile, mkdir } from 'node:fs/promises';
@@ -136,6 +138,40 @@ async function latestReleases() {
   return out;
 }
 
+
+// ---------- Instagram gallery ----------
+const GALLERY_COUNT = 6;
+export function mapInstagram(items) {
+  return (items || [])
+    .filter((m) => m && (m.media_type === 'IMAGE' || m.media_type === 'CAROUSEL_ALBUM') && m.media_url && /^https:\/\//.test(m.media_url))
+    .sort((a, b) => String(b.timestamp).localeCompare(String(a.timestamp)))
+    .slice(0, GALLERY_COUNT)
+    .map((m) => ({
+      mediaUrl: m.media_url,
+      url: /^https:\/\/(www\.)?instagram\.com\//.test(m.permalink || '') ? m.permalink : '',
+      alt: ((m.caption || '').replace(/[#@]\S+/g, '').replace(/\s+/g, ' ').trim().slice(0, 110)) || 'Photo of TiMO ODV',
+    }));
+}
+async function instagramGallery() {
+  const token = env.INSTAGRAM_ACCESS_TOKEN;
+  if (!token) throw new Error('no INSTAGRAM_ACCESS_TOKEN');
+  // Keep the 60-day token alive (only works once the token is >24h old; harmless otherwise).
+  try {
+    const r = await getJson(`https://graph.instagram.com/refresh_access_token?grant_type=ig_refresh_token&access_token=${encodeURIComponent(token)}`);
+    if (r.access_token && r.access_token !== token) log('WARNING: Instagram returned a different token; update INSTAGRAM_ACCESS_TOKEN');
+    else log('instagram token refreshed, expires_in', r.expires_in);
+  } catch (e) { log('instagram token refresh skipped:', e.message); }
+  const data = await getJson(`https://graph.instagram.com/me/media?fields=id,media_type,media_url,permalink,timestamp,caption&limit=40&access_token=${encodeURIComponent(token)}`);
+  const picks = mapInstagram(data.data);
+  const out = [];
+  for (const [i, m] of picks.entries()) {
+    const file = `gallery/ig-${i + 1}.jpg`;
+    await download(m.mediaUrl, path.join(IMG, file), 5000); // any failure aborts: never publish a half-broken gallery
+    out.push({ src: `/img/${file}`, alt: m.alt, url: m.url });
+  }
+  return out.length === GALLERY_COUNT ? out : null; // fewer than 6 usable photos -> keep placeholders
+}
+
 // ---------- run ----------
 async function step(name, file, fn, fallback) {
   const target = path.join(CONTENT, file);
@@ -150,4 +186,5 @@ async function step(name, file, fn, fallback) {
 if (import.meta.url === `file://${process.argv[1]}`) {
   await step('latest video', 'latest-video.json', latestVideo, { id: site.featuredVideoId || '', title: '', published: '', thumb: '' });
   await step('releases', 'releases.auto.json', latestReleases, []);
+  await step('instagram gallery', 'gallery.json', instagramGallery, []);
 }

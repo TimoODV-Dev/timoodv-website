@@ -6,6 +6,7 @@ import manualReleases from '../content/releases.json';
 import autoReleases from '../content/releases.auto.json';
 import shows from '../content/shows.json';
 import video from '../content/latest-video.json';
+import gallery from '../content/gallery.json';
 import { Content as Bio } from '../content/bio.md';
 
 // Latest releases come from Spotify / Apple Music at build time; releases.json is a manual fallback.
@@ -156,14 +157,14 @@ const turnstileKey = import.meta.env.PUBLIC_TURNSTILE_SITEKEY || '';
         <p class="eyebrow">04 — Visuals</p>
         <h2 class="section-title" id="visuals-title">Visuals</h2>
       </header>
-      <!-- Replace the placeholders with 1600×900 photos in public/img/gallery/ -->
       <ul class="gallery">
-        <li class="gallery__item gallery__item--wide"><img src="/img/gallery-placeholder.svg" alt="" width="1600" height="900" loading="lazy"></li>
-        <li class="gallery__item"><img src="/img/gallery-placeholder.svg" alt="" width="1600" height="900" loading="lazy"></li>
-        <li class="gallery__item"><img src="/img/gallery-placeholder.svg" alt="" width="1600" height="900" loading="lazy"></li>
-        <li class="gallery__item"><img src="/img/gallery-placeholder.svg" alt="" width="1600" height="900" loading="lazy"></li>
-        <li class="gallery__item"><img src="/img/gallery-placeholder.svg" alt="" width="1600" height="900" loading="lazy"></li>
-        <li class="gallery__item"><img src="/img/gallery-placeholder.svg" alt="" width="1600" height="900" loading="lazy"></li>
+        {gallery.map((g, i) => (
+          <li class={`gallery__item${i === 0 ? ' gallery__item--wide' : ''}`}>
+            {g.url
+              ? <a href={g.url} rel="noopener noreferrer" target="_blank" aria-label={`${g.alt} (opens Instagram)`}><img src={g.src} alt={g.alt} width="1080" height="1080" loading="lazy"></a>
+              : <img src={g.src} alt={g.alt} width="1600" height="900" loading="lazy">}
+          </li>
+        ))}
       </ul>
     </div>
   </section>

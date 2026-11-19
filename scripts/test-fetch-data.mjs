@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { parseFeed, mapSpotify, mapItunes } from './fetch-data.mjs';
+import { parseFeed, mapSpotify, mapItunes, mapInstagram } from './fetch-data.mjs';
 
 const feed = `<feed><entry><id>yt:video:abcDEF12345</id><yt:videoId>abcDEF12345</yt:videoId><title>New Track &amp; Video (Official)</title><published>2026-11-01T10:00:00+00:00</published></entry>
 <entry><yt:videoId>zzzzzzzzzzz</yt:videoId><title>Older</title><published>2026-01-01T10:00:00+00:00</published></entry>
@@ -21,4 +21,12 @@ const it = mapItunes([
 ]);
 assert.deepEqual(it.map((r) => [r.title, r.type, r.year, r.label]), [['2 AM', 'Single', '2025', 'Midnight Children Records'], ['ORIGINS', 'EP', '2016', 'Universal Music']]);
 assert.match(it[0].coverSrc, /600x600bb\.jpg$/);
+const ig = mapInstagram([
+  { media_type: 'VIDEO', media_url: 'https://x/v.mp4', timestamp: '2026-11-10T10:00:00+0000' },
+  { media_type: 'IMAGE', media_url: 'https://cdn.example/a.jpg', permalink: 'https://www.instagram.com/p/AAA/', timestamp: '2026-11-09T10:00:00+0000', caption: 'Cape Town last night #deephouse @someone  thank you!' },
+  { media_type: 'CAROUSEL_ALBUM', media_url: 'https://cdn.example/b.jpg', permalink: 'https://evil.example/p/1', timestamp: '2026-11-11T10:00:00+0000' },
+  { media_type: 'IMAGE', media_url: 'http://insecure/c.jpg', timestamp: '2026-11-12T10:00:00+0000' },
+]);
+assert.equal(ig.length, 2); assert.equal(ig[0].mediaUrl, 'https://cdn.example/b.jpg'); assert.equal(ig[0].url, ''); assert.equal(ig[0].alt, 'Photo of TiMO ODV');
+assert.equal(ig[1].alt, 'Cape Town last night thank you!'); assert.equal(ig[1].url, 'https://www.instagram.com/p/AAA/');
 console.log('fetch-data parsers: all tests passed');
