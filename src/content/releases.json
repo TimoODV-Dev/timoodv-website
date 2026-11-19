@@ -1,16 +1,34 @@
 [
   {
-    "title": "What About Us?",
-    "date": "2026-10-09",
-    "platform": "Midnight Children Records",
-    "url": "https://open.spotify.com/artist/5ekzQ0Zq1wSg7dDZHYKFLt",
-    "youtubeId": null
+    "title": "PLACEHOLDER — Release title",
+    "type": "Single",
+    "year": "2026",
+    "label": "Label name",
+    "cover": "/img/cover-placeholder.svg",
+    "url": "#"
   },
   {
-    "title": "Me, I Dance",
-    "date": "2026-02-27",
-    "platform": "Midnight Children Records",
-    "url": "https://open.spotify.com/artist/5ekzQ0Zq1wSg7dDZHYKFLt",
-    "youtubeId": "pqqzZOmbiEg"
+    "title": "PLACEHOLDER — Another release",
+    "type": "Single",
+    "year": "2026",
+    "label": "Label name",
+    "cover": "/img/cover-placeholder.svg",
+    "url": "#"
+  },
+  {
+    "title": "PLACEHOLDER — EP title",
+    "type": "EP",
+    "year": "2025",
+    "label": "Label name",
+    "cover": "/img/cover-placeholder.svg",
+    "url": "#"
+  },
+  {
+    "title": "PLACEHOLDER — Track name",
+    "type": "Single",
+    "year": "2025",
+    "label": "Label name",
+    "cover": "/img/cover-placeholder.svg",
+    "url": "#"
   }
 ]
