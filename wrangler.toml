@@ -13,7 +13,7 @@ database_id = "40ef19dc-9443-4022-bf03-847f6560b5ec"
 
 [[kv_namespaces]]
 binding = "CACHE"
-id = "REPLACE_AFTER_CREATE"
+id = "190fe498ea864cc180e4bf4fca8e808c"
 
 [vars]
 # public only
