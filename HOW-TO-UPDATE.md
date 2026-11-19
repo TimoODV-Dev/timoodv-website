@@ -15,7 +15,7 @@ Photos: put gallery photos in `public/img/gallery/` (1600x900) and swap the plac
 ## shows.json example
 ```json
 [
-  { "date": "2026-12-12", "venue": "Venue name", "city": "Cape Town, ZA", "event": "Event name",
+  { "date": "2026-12-12", "venue": "Venue name", "city": "Johannesburg, ZA", "event": "Event name",
     "status": "tickets", "url": "https://ticket-link" }
 ]
 ```
