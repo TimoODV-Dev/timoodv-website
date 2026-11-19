@@ -7,7 +7,7 @@ import { makeHandler } from '../functions/api/booking.ts';
 
 function fakeServer(opts = {}) {
   const o = { auth: 'PLAIN LOGIN', starttls: false, rejectRcpt: [], goodPass: 'secret-pass', silent: false, ...opts };
-  const log = []; const state = { data: '', inData: false, authStage: 0 };
+  const log = []; const messages = []; const state = { data: '', inData: false, authStage: 0 };
   const server = net.createServer((sock) => {
     let buf = '';
     const w = (s) => sock.write(s + '\r\n');
@@ -18,7 +18,7 @@ function fakeServer(opts = {}) {
         if (state.inData) {
           const end = buf.indexOf('\r\n.\r\n');
           if (end === -1) return;
-          state.data = buf.slice(0, end + 2); buf = buf.slice(end + 5); state.inData = false; log.push('<message>'); w('250 queued'); continue;
+          state.data = buf.slice(0, end + 2); messages.push(state.data); buf = buf.slice(end + 5); state.inData = false; log.push('<message>'); w('250 queued'); continue;
         }
         const i = buf.indexOf('\r\n'); if (i === -1) return;
         const line = buf.slice(0, i); buf = buf.slice(i + 2);
@@ -38,7 +38,7 @@ function fakeServer(opts = {}) {
     });
     sock.on('error', () => {});
   });
-  return new Promise((res) => server.listen(0, '127.0.0.1', () => res({ port: server.address().port, log, state, close: () => server.close() })));
+  return new Promise((res) => server.listen(0, '127.0.0.1', () => res({ port: server.address().port, log, messages, state, close: () => server.close() })));
 }
 const connectTo = (port, tlsCalls) => async () => {
   const sock = net.connect(port, '127.0.0.1');
@@ -95,10 +95,21 @@ const m = buildMessage(base(1), new Date('2026-11-19T10:00:00Z'), 'abc'); assert
 // 10. through the real form handler: Turnstile ok -> SMTP, both recipients; SMTP failure -> 502 without leaking the password
 const realFetch = globalThis.fetch; globalThis.fetch = async () => new Response(JSON.stringify({ success: true, hostname: 'timoodv.test' }));
 const env = (port, over = {}) => ({ TURNSTILE_SECRET: 't', SMTP_HOST: 'mail.example.com', SMTP_PORT: '465', SMTP_USER: 'website@timoodv.com', SMTP_PASS: 'secret-pass', BOOKING_FROM_EMAIL: 'website@timoodv.com', BOOKING_TO_EMAIL: 'bookings@timoodv.com,adrien@ce-mgmt.com', ...over });
-const post = (handler, e) => { const fd = new FormData(); fd.set('name', 'Ann'); fd.set('email', 'ann@example.com'); fd.set('message', 'Hello'); fd.set('cf-turnstile-response', 'tok'); return handler({ request: new Request('https://timoodv.test/api/booking', { method: 'POST', body: fd }), env: e }); };
+const post = (handler, e, extra = {}) => { const fd = new FormData(); fd.set('name', 'Ann'); fd.set('email', 'ann@example.com'); fd.set('message', 'Hello'); fd.set('cf-turnstile-response', 'tok'); for (const [k, v] of Object.entries(extra)) fd.set(k, v); return handler({ request: new Request('https://timoodv.test/api/booking', { method: 'POST', body: fd }), env: e }); };
 s = await fakeServer(); let res = await post(makeHandler(connectTo(s.port, { n: 0 })), env(s.port)); assert.equal(res.status, 200); assert.equal(s.log.filter((l) => l.startsWith('RCPT')).length, 2); assert.match(headersOf(s.state.data), /Subject: Booking enquiry from Ann/); s.close();
 s = await fakeServer({ goodPass: 'other' }); const errs = []; const ce = console.error; console.error = (...a) => errs.push(a.join(' '));
 res = await post(makeHandler(connectTo(s.port, { n: 0 })), env(s.port)); console.error = ce; assert.equal(res.status, 502); const txt = await res.text(); assert.ok(!txt.includes('secret-pass') && !errs.join().includes('secret-pass') && !errs.join().includes('Hello'), 'no secrets or message in output'); s.close();
 res = await post(makeHandler(connectTo(1, { n: 0 })), env(1, { SMTP_PASS: undefined })); assert.equal(res.status, 503, 'SMTP half-configured: closed, not faked');
+// 11. reference number + optional copy for the sender
+s = await fakeServer(); res = await post(makeHandler(connectTo(s.port, { n: 0 })), env(s.port), { send_copy: '1' }); let j = await res.json();
+assert.equal(res.status, 200); assert.match(j.ref, /^TMO-[A-HJ-KM-NP-Z2-9]{6}$/); assert.equal(j.copy, true); assert.equal(s.messages.length, 2);
+assert.match(headersOf(s.messages[0]), new RegExp(`Subject: Booking enquiry from Ann \\[${j.ref}\\]`)); assert.match(headersOf(s.messages[0]), /To: <bookings@timoodv.com>, <adrien@ce-mgmt.com>/);
+assert.match(headersOf(s.messages[1]), /^From: "TiMO ODV website" <website@timoodv.com>/); assert.match(headersOf(s.messages[1]), /To: <ann@example.com>\r\n/); assert.ok(!/adrien|Bcc/i.test(headersOf(s.messages[1])), 'copy goes only to the sender');
+assert.match(headersOf(s.messages[1]), new RegExp(`Subject: Your enquiry to TiMO ODV \\[${j.ref}\\]`)); assert.match(headersOf(s.messages[1]), /Reply-To: <bookings@timoodv.com>/);
+assert.match(bodyOf(s.messages[1]), new RegExp(`Reference: ${j.ref}`)); assert.match(bodyOf(s.messages[1]), /Name: Ann/); assert.match(bodyOf(s.messages[0]), new RegExp(`Reference: ${j.ref}`)); s.close();
+s = await fakeServer(); res = await post(makeHandler(connectTo(s.port, { n: 0 })), env(s.port)); j = await res.json(); assert.equal(j.copy, false); assert.equal(s.messages.length, 1, 'no copy unless asked'); assert.ok(j.ref); s.close();
+s = await fakeServer({ rejectRcpt: ['ann@'] }); res = await post(makeHandler(connectTo(s.port, { n: 0 })), env(s.port), { send_copy: '1' }); j = await res.json();
+assert.equal(res.status, 200, 'a failed copy never fails the enquiry'); assert.equal(j.copy, false); assert.equal(s.messages.length, 1); s.close();
+const refs = new Set(); for (let i = 0; i < 20; i++) { s = await fakeServer(); refs.add((await (await post(makeHandler(connectTo(s.port, { n: 0 })), env(s.port))).json()).ref); s.close(); } assert.ok(refs.size > 15, 'references are random');
 globalThis.fetch = realFetch;
 console.log('smtp sender: all tests passed');

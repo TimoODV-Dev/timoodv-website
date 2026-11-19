@@ -105,42 +105,62 @@ export const makeHandler = (connect: Connect) => async ({ request, env }: { requ
     return json({ error: "Booking form is temporarily unavailable. Please email us directly." }, 503);
   }
 
-  const lines = [`Name: ${name}`, `Email: ${email}`];
+  // Short reference the visitor sees on screen and in both emails, so an enquiry is easy to find later.
+  const ALPHABET = "23456789ABCDEFGHJKMNPQRSTUVWXYZ"; // no 0/O/1/I/L
+  const ref = "TMO-" + Array.from(crypto.getRandomValues(new Uint8Array(6)), (n) => ALPHABET[n % ALPHABET.length]).join("");
+  const sendCopy = clean(form.get("send_copy"), 5) === "1";
+
+  const lines = [`Reference: ${ref}`, `Name: ${name}`, `Email: ${email}`];
   if (organisation) lines.push(`Organisation: ${organisation}`);
   if (eventDate) lines.push(`Event date: ${eventDate}`);
   if (venue) lines.push(`Venue & city: ${venue}`);
   lines.push("", message);
   const text = lines.join("\n");
 
-  const subject = `Booking enquiry from ${name}`.slice(0, 150);
-  if (useSmtp) {
-    try {
+  // One delivery function for both emails (SMTP preferred, Resend as fallback).
+  const deliver = async (rcpt: string[], subject: string, body: string, replyTo: string) => {
+    if (useSmtp) {
       const port = parseInt(env.SMTP_PORT || "465", 10);
-      await sendSmtp({ host: env.SMTP_HOST!, port: port === 587 ? 587 : 465, user: env.SMTP_USER!, pass: env.SMTP_PASS!, from: env.BOOKING_FROM_EMAIL, fromName: "TiMO ODV website", to, replyTo: email, subject, text }, connect);
-    } catch (e) {
-      // Log the reason (never the password or the visitor's message).
-      console.error("booking: smtp error", e instanceof Error ? e.message : "unknown");
-      return json({ error: "Could not send. Please try again or email us directly." }, 502);
+      await sendSmtp({ host: env.SMTP_HOST!, port: port === 587 ? 587 : 465, user: env.SMTP_USER!, pass: env.SMTP_PASS!, from: env.BOOKING_FROM_EMAIL!, fromName: "TiMO ODV website", to: rcpt, replyTo, subject, text: body }, connect);
+      return;
     }
-    return json({ ok: true });
-  }
+    const res = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${env.RESEND_API_KEY}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ from: `TiMO ODV website <${env.BOOKING_FROM_EMAIL}>`, to: rcpt, reply_to: replyTo, subject, text: body }),
+    });
+    if (!res.ok) throw new Error(`provider ${res.status}`);
+  };
 
-  const res = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: { Authorization: `Bearer ${env.RESEND_API_KEY}`, "Content-Type": "application/json" },
-    body: JSON.stringify({
-      from: `TiMO ODV website <${env.BOOKING_FROM_EMAIL}>`,
-      to,
-      reply_to: email,
-      subject,
-      text,
-    }),
-  });
-  if (!res.ok) {
-    console.error("booking: email provider error", res.status);
+  try {
+    await deliver(to, `Booking enquiry from ${name} [${ref}]`.slice(0, 150), text, email);
+  } catch (e) {
+    // Log the reason (never the password or the visitor's message).
+    console.error("booking: send failed", e instanceof Error ? e.message : "unknown");
     return json({ error: "Could not send. Please try again or email us directly." }, 502);
   }
-  return json({ ok: true });
+
+  // Optional copy for the sender. A failure here never fails the enquiry, which has already been delivered.
+  let copy = false;
+  if (sendCopy) {
+    const copyText = [
+      "Thanks for contacting TiMO ODV. This is a copy of your enquiry for your records.",
+      `Reference: ${ref}`,
+      "",
+      ...lines.slice(1),
+      "",
+      "We will reply to this email address. If you did not send this enquiry, you can ignore this message.",
+      "",
+      "TiMO ODV",
+    ].join("\n");
+    try {
+      await deliver([email], `Your enquiry to TiMO ODV [${ref}]`, copyText, to[0]);
+      copy = true;
+    } catch (e) {
+      console.error("booking: copy failed", e instanceof Error ? e.message : "unknown");
+    }
+  }
+  return json({ ok: true, ref, copy });
 };
 
 export const onRequestPost: PagesFunction<Env> = (ctx) => makeHandler(cloudflareConnect)(ctx);
