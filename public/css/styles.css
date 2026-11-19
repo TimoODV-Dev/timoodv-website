@@ -474,13 +474,6 @@ button { font: inherit; color: inherit; }
 .empty-note { color: var(--ink-2); padding: 1rem 0 0; }
 .empty-note a, .show-empty a { color: var(--ink); text-underline-offset: .25em; text-decoration-color: var(--red); }
 .empty-note + .section-head { margin-top: var(--section-y); }
-.legal { padding: calc(var(--header-h) + clamp(3rem, 8vw, 6rem)) 0 var(--section-y); min-height: 60vh; }
-.legal h1 { font-family: var(--font-display); font-weight: 400; text-transform: uppercase; font-size: clamp(2.5rem, 7vw, 5rem); line-height: .95; margin-bottom: 2rem; }
-.legal h2 { font-family: var(--font-display); font-weight: 400; text-transform: uppercase; font-size: 1.6rem; margin: 2.2rem 0 .6rem; }
-.legal p, .legal li { color: var(--ink-2); max-width: 68ch; }
-.legal p + p { margin-top: 1rem; }
-.legal a { color: var(--ink); }
-
 .gallery__item a { display: block; position: absolute; inset: 0; }
 
 @media (max-width: 600px) {
@@ -499,7 +492,38 @@ button { font: inherit; color: inherit; }
 }
 .egg__close:hover, .egg__close:focus-visible { background: var(--red); border-color: var(--red); }
 @media (max-width: 600px) { .site-footer__wordmark { width: min(46%, 12rem); } }
-.legal ul { list-style: disc; padding-left: 1.25rem; margin: .6rem 0 0; }
-.legal li + li { margin-top: .4rem; }
-.legal .legal__meta { font-size: .85rem; color: var(--ink-3); margin-bottom: 2rem; }
-.legal strong { color: var(--ink); font-weight: 600; }
+
+.legal { padding: calc(var(--header-h) + clamp(2.5rem, 6vw, 5rem)) 0 var(--section-y); min-height: 60vh; }
+.legal__head { margin-bottom: clamp(2rem, 4vw, 3.5rem); padding-bottom: clamp(1.5rem, 3vw, 2.5rem); border-bottom: 1px solid var(--line); }
+.legal__head h1 { font-family: var(--font-display); font-weight: 400; text-transform: uppercase; font-size: clamp(2.75rem, 8vw, 6rem); line-height: .95; margin: .6rem 0 1rem; }
+.legal__layout { display: grid; grid-template-columns: 15rem minmax(0, 1fr); gap: clamp(2rem, 6vw, 6rem); align-items: start; }
+.legal__toc { position: sticky; top: calc(var(--header-h) + 1.5rem); font-size: .9rem; }
+.legal__toc-title { font-size: .68rem; letter-spacing: var(--track-wide); text-transform: uppercase; color: var(--ink-3); margin-bottom: .9rem; }
+.legal__toc ol { list-style: none; padding: 0; margin: 0; border-left: 1px solid var(--line); }
+.legal__toc li a { display: block; padding: .4rem 0 .4rem 1rem; margin-left: -1px; border-left: 1px solid transparent; color: var(--ink-3); text-decoration: none; transition: color .2s, border-color .2s; }
+.legal__toc li a:hover, .legal__toc li a:focus-visible { color: var(--ink); border-left-color: var(--red); }
+.legal__other { list-style: none; padding: 0; margin: 2rem 0 0; font-size: .8rem; }
+.legal__other a { display: block; padding: .25rem 0; color: var(--ink-3); text-decoration: none; }
+.legal__other a:hover { color: var(--ink); }
+.legal__body { max-width: 46rem; }
+.legal__body > p:first-child { font-size: clamp(1.05rem, 1.4vw, 1.2rem); color: var(--ink); line-height: 1.6; }
+.legal__body h2 { font-family: var(--font-display); font-weight: 400; text-transform: uppercase; font-size: clamp(1.5rem, 2.2vw, 1.9rem); line-height: 1.05; margin: 2.75rem 0 .9rem; padding-top: 1.75rem; border-top: 1px solid var(--line); scroll-margin-top: calc(var(--header-h) + 1rem); }
+.legal__body h2:first-of-type { margin-top: 2.25rem; }
+.legal__body p, .legal__body li { color: var(--ink-2); line-height: 1.7; }
+.legal__body p + p { margin-top: 1rem; }
+.legal__body a { color: var(--ink); text-underline-offset: .2em; }
+.legal__body a:hover { color: var(--red-glow); }
+.legal__body ul { list-style: disc; padding-left: 1.25rem; margin: .8rem 0 0; }
+.legal__body li + li { margin-top: .55rem; }
+.legal__body li::marker { color: var(--red); }
+.legal__body ul + p { margin-top: 1rem; }
+.legal__body strong { color: var(--ink); font-weight: 600; }
+.legal__meta { font-size: .85rem; color: var(--ink-3); }
+@media (max-width: 900px) {
+  .legal__layout { grid-template-columns: 1fr; }
+  .legal__toc { position: static; border: 1px solid var(--line); padding: 1.1rem 1.25rem; }
+  .legal__toc ol { columns: 2; column-gap: 1.5rem; border-left: 0; }
+  .legal__toc li a { padding: .3rem 0; border-left: 0; margin: 0; }
+  .legal__other { display: none; }
+}
+@media (max-width: 520px) { .legal__toc ol { columns: 1; } }
