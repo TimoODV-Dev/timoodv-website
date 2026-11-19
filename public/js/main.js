@@ -62,6 +62,40 @@
   document.addEventListener('click', (e) => { if (!e.target.closest('[data-release]')) closeReleases(); });
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeReleases(); });
 
+  // Hidden: five quick clicks on the O of the logo (hero or footer) play the TiMO ODV cartoons.
+  const eggList = (document.body.dataset.eggVideos || '').split(',').filter((p) => /^\/video\/[\w.-]+\.(mp4|webm)$/.test(p));
+  if (eggList.length) {
+    const O = { x0: 0.495, x1: 0.785, y0: 0.05, y1: 0.98 }; // the brush-ring O inside the logo image
+    let clicks = 0; let last = 0; let dlg = null;
+    const openEgg = () => {
+      if (dlg) return;
+      let i = 0;
+      dlg = document.createElement('dialog'); dlg.className = 'egg'; dlg.setAttribute('aria-label', 'TiMO ODV cartoons');
+      const v = document.createElement('video'); v.className = 'egg__video'; v.controls = true; v.playsInline = true; v.preload = 'auto';
+      const x = document.createElement('button'); x.className = 'egg__close'; x.type = 'button'; x.setAttribute('aria-label', 'Close'); x.textContent = '\u00d7';
+      const closeEgg = () => { v.pause(); v.removeAttribute('src'); v.load(); dlg.close(); dlg.remove(); dlg = null; };
+      const play = () => { v.src = eggList[i]; v.play().catch(() => {}); };
+      v.addEventListener('ended', () => { i += 1; if (i < eggList.length) play(); else closeEgg(); });
+      v.addEventListener('error', closeEgg);
+      x.addEventListener('click', closeEgg);
+      dlg.addEventListener('click', (e) => { if (e.target === dlg) closeEgg(); });
+      dlg.addEventListener('cancel', (e) => { e.preventDefault(); closeEgg(); });
+      dlg.append(v, x); document.body.append(dlg); dlg.showModal(); play();
+    };
+    document.addEventListener('click', (e) => {
+      const img = e.target.closest && e.target.closest('.hero__title img, .site-footer__wordmark');
+      let hit = false;
+      if (img) {
+        const r = img.getBoundingClientRect(); const fx = (e.clientX - r.left) / r.width; const fy = (e.clientY - r.top) / r.height;
+        hit = fx >= O.x0 && fx <= O.x1 && fy >= O.y0 && fy <= O.y1;
+      }
+      if (!hit) { clicks = 0; return; }
+      const now = Date.now();
+      clicks = now - last > 1500 ? 1 : clicks + 1; last = now;
+      if (clicks >= 5) { clicks = 0; openEgg(); }
+    });
+  }
+
   // Footer year
   document.querySelectorAll('[data-year]').forEach((n) => { n.textContent = new Date().getFullYear(); });
 
