@@ -203,7 +203,7 @@ export function matchRecord(albums, title) {
     .sort((a, b) => String(a.releaseDate).localeCompare(String(b.releaseDate)))[0];
   if (!hit) return null;
   const year = /^\d{4}/.test(hit.releaseDate || '') ? hit.releaseDate.slice(0, 4) : '';
-  return { src: hit.artworkUrl100.replace(/\/\d+x\d+bb\./, '/600x600bb.'), year };
+  return { src: hit.artworkUrl100.replace(/\/\d+x\d+bb\./, '/600x600bb.'), year, url: /^https:\/\/(music|itunes)\.apple\.com\//.test(hit.collectionViewUrl || '') ? hit.collectionViewUrl : '' };
 }
 export const matchRecordArt = (albums, title) => matchRecord(albums, title)?.src || '';
 async function recordArt() {
@@ -216,7 +216,7 @@ async function recordArt() {
     const m = matchRecord(data.results || [], r.title);
     if (!m) { log('record art: no match for', r.title); continue; }
     const file = `records/${slug(r.title)}.jpg`;
-    try { await download(m.src, path.join(IMG, file)); out[slug(r.title)] = { cover: `/img/${file}`, year: m.year }; } catch (e) { log('record art failed', r.title, e.message); }
+    try { await download(m.src, path.join(IMG, file)); out[slug(r.title)] = { cover: `/img/${file}`, year: m.year, url: m.url }; } catch (e) { log('record art failed', r.title, e.message); }
   }
   return out;
 }

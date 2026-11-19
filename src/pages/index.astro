@@ -56,7 +56,15 @@ const records = (Array.isArray(rawRecords.records) ? rawRecords.records : []).sl
   const level = LEVELS.find((l) => l.toLowerCase() === String(r.level || '').trim().toLowerCase()) || '';
   const meta = (recordArt as any)?.[slugOf(title)] || {};
   const art = meta.cover;
-  return { title, level, tier: level ? level.toLowerCase().replace('multi-', '') : 'certified', year: [r.year, meta.year].map(String).find((y) => /^\d{4}$/.test(y)) || '', art: typeof art === 'string' && /^\/img\/records\/[a-z0-9-]+\.jpg$/.test(art) ? art : '' };
+  const q = encodeURIComponent(`${title} TiMO ODV`);
+  const ok = (u: unknown, re: RegExp) => (typeof u === 'string' && re.test(u) ? u : '');
+  const ov = r.links || {};
+  const listen = [
+    { name: 'Spotify', url: ok(ov.spotify, /^https:\/\/open\.spotify\.com\//) || `https://open.spotify.com/search/${q}` },
+    { name: 'Apple Music', url: ok(ov.apple, /^https:\/\/(music|itunes)\.apple\.com\//) || ok(meta.url, /^https:\/\/(music|itunes)\.apple\.com\//) || `https://music.apple.com/za/search?term=${q}` },
+    { name: 'YouTube', url: ok(ov.youtube, /^https:\/\/(www\.)?youtube\.com\/|^https:\/\/youtu\.be\//) || `https://www.youtube.com/results?search_query=${q}` },
+  ];
+  return { title, listen, level, tier: level ? level.toLowerCase().replace('multi-', '') : 'certified', year: [r.year, meta.year].map(String).find((y) => /^\d{4}$/.test(y)) || '', art: typeof art === 'string' && /^\/img\/records\/[a-z0-9-]+\.jpg$/.test(art) ? art : '' };
 }).filter((r: any) => r.title);
 const sameAs = [links.instagram, links.youtube, links.spotify, links.appleMusic].filter((u) => /^https:\/\//.test(u || ''));
 const jsonLd = {
@@ -240,7 +248,8 @@ const turnstileKey = /^[0-9A-Za-z_-]{10,60}$/.test(rawKey) ? rawKey : '';
           <ul class="plaques" data-count={records.length}>
             {records.map((r) => (
               <li class="plaque" data-tier={r.tier}>
-                <div class="plaque__frame">
+                <details class="plaque__d">
+                <summary class="plaque__frame" aria-label={`${r.title}: listen on Spotify, Apple Music or YouTube`}>
                   <div class="plaque__mat">
                     <div class="plaque__art">
                       {r.art ? <img src={r.art} alt={`${r.title} cover art`} width="600" height="600" loading="lazy"> : <span class="plaque__art-title" aria-hidden="true">{r.title}</span>}
@@ -252,7 +261,12 @@ const turnstileKey = /^[0-9A-Za-z_-]{10,60}$/.test(rawKey) ? rawKey : '';
                       <p class="plaque__name">{r.title}{r.year ? ` · ${r.year}` : ''}</p>
                     </div>
                   </div>
+                </summary>
+                <div class="plaque__links" role="group" aria-label={`Listen to ${r.title}`}>
+                  <p class="plaque__links-title">Listen to<br><strong>{r.title}</strong></p>
+                  {r.listen.map((l) => <a href={l.url} target="_blank" rel="noopener noreferrer">{l.name}</a>)}
                 </div>
+                </details>
               </li>
             ))}
           </ul>
