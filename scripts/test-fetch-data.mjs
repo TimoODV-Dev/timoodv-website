@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { parseFeed, mapSpotify, mapItunes, mapInstagram, mapYoutubeStats, mapInstagramProfile } from './fetch-data.mjs';
+import { parseFeed, mapSpotify, mapItunes, mapInstagram, mapYoutubeStats, mapInstagramProfile, matchRecordArt } from './fetch-data.mjs';
 
 const feed = `<feed><entry><id>yt:video:abcDEF12345</id><yt:videoId>abcDEF12345</yt:videoId><title>New Track &amp; Video (Official)</title><published>2026-11-01T10:00:00+00:00</published></entry>
 <entry><yt:videoId>zzzzzzzzzzz</yt:videoId><title>Older</title><published>2026-01-01T10:00:00+00:00</published></entry>
@@ -36,4 +36,10 @@ assert.deepEqual(mapYoutubeStats({ items: [{ statistics: { viewCount: '21345678'
 assert.deepEqual(mapYoutubeStats({ items: [{ statistics: { viewCount: '5', hiddenSubscriberCount: true, subscriberCount: '0' } }] }), { views: 5, subscribers: null });
 assert.equal(mapYoutubeStats({ items: [] }), null); assert.equal(mapYoutubeStats({ items: [{ statistics: { viewCount: '<script>' } }] }), null); assert.equal(mapYoutubeStats({ items: [{ statistics: { viewCount: '-4' } }] }), null);
 assert.deepEqual(mapInstagramProfile({ followers_count: 5432 }), { followers: 5432 }); assert.equal(mapInstagramProfile({ followers_count: 'x' }), null); assert.equal(mapInstagramProfile({}), null);
+// record cover matching
+const alb = (name, date, art = 'https://is1.mzstatic.com/x/100x100bb.jpg') => ({ wrapperType: 'collection', collectionName: name, releaseDate: date, artworkUrl100: art });
+const albums = [alb('Save Me (feat. Sarah Jackson) [Record of the Year Edition]', '2016-05-27T07:00:00Z'), alb('Save Me (feat. Sarah Jackson) - Single', '2015-02-20T08:00:00Z'), alb('Move - Single', '2019-01-01T08:00:00Z'), alb('Moves Like Jagger', '2011-01-01T08:00:00Z'), alb('Origins - EP', '2016-03-04T08:00:00Z')];
+assert.equal(matchRecordArt(albums, 'Save Me'), 'https://is1.mzstatic.com/x/600x600bb.jpg');
+assert.ok(matchRecordArt(albums, 'Move'), 'Move found'); assert.equal(matchRecordArt([alb('Moves Like Jagger', '2011')], 'Move'), '', 'no partial-word match');
+assert.ok(matchRecordArt(albums, 'Origins')); assert.equal(matchRecordArt(albums, 'Nope'), ''); assert.equal(matchRecordArt([{ wrapperType: 'collection', collectionName: 'Move', artworkUrl100: 'http://insecure/100x100bb.jpg' }], 'Move'), '', 'https only');
 console.log('fetch-data parsers: all tests passed');
