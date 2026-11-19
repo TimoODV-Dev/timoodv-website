@@ -4,6 +4,8 @@ import links from '../content/links.json';
 import egg from '../content/easter-egg.json';
 // Only plain /video/<name>.mp4|webm paths are accepted.
 const eggVideos = (egg.videos || []).filter((p) => /^\/video\/[\w.-]+\.(mp4|webm)$/.test(p));
+// Changes on every deploy so browsers never keep an old copy of the script or styles.
+const buildId = Date.now().toString(36);
 ---
 <!doctype html>
 <html lang="en-ZA">
@@ -22,8 +24,8 @@ const eggVideos = (egg.videos || []).filter((p) => /^\/video\/[\w.-]+\.(mp4|webm
   <link rel="preload" href="/img/hero-1800.avif" as="image" type="image/avif" fetchpriority="high">
   <link rel="preload" href="/fonts/anton-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="/fonts/archivo-latin-500-normal.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="/css/styles.css">
-  <script src="/js/main.js" defer></script>
+  <link rel="stylesheet" href={`/css/styles.css?v=${buildId}`}>
+  <script src={`/js/main.js?v=${buildId}`} defer></script>
 </head>
 <body data-egg-videos={eggVideos.join(',')}>
   <svg xmlns="http://www.w3.org/2000/svg" width="0" height="0" hidden aria-hidden="true" focusable="false">
