@@ -9,7 +9,7 @@ crons = ["0 */6 * * *"]  # every 6 hours
 [[d1_databases]]
 binding = "DB"
 database_name = "timoodv-site"
-database_id = "REPLACE_AFTER_CREATE"
+database_id = "40ef19dc-9443-4022-bf03-847f6560b5ec"
 
 [[kv_namespaces]]
 binding = "CACHE"
