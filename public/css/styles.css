@@ -366,10 +366,10 @@ button { font: inherit; color: inherit; }
 .platforms a:hover { color: var(--bg); }
 
 /* ---------- Certified-record plaques ---------- */
-.records { margin-bottom: 2.25rem; }
-.records__photo { margin: 0 0 2rem; }
-.records__photo img { display: block; width: 100%; height: auto; object-fit: cover; aspect-ratio: 1368 / 809; }
-.records__photo figcaption { margin-top: .6rem; font-size: .75rem; color: var(--ink-3); letter-spacing: .04em; }
+.records { position: relative; isolation: isolate; margin-bottom: 2.25rem; padding: clamp(1.75rem, 4vw, 3rem) clamp(1rem, 3vw, 2rem) 1rem; overflow: hidden; }
+.records__bg { position: absolute; inset: 0; z-index: -1; }
+.records__bg img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 35%; filter: grayscale(1) contrast(1.05); opacity: .42; display: block; }
+.records__bg::after { content: ""; position: absolute; inset: 0; background: linear-gradient(to bottom, var(--bg, #050609) 0%, rgba(5, 6, 9, .35) 30%, rgba(5, 6, 9, .35) 70%, var(--bg, #050609) 100%); }
 .records__title { font-size: .75rem; letter-spacing: var(--track-wide); text-transform: uppercase; color: var(--ink-3); font-weight: 400; margin-bottom: 1rem; }
 .plaques { list-style: none; margin: 0; padding: .5rem .25rem 1.25rem; display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: clamp(.6rem, 1.4vw, 1.1rem); }
 .plaque { container-type: inline-size; transition: transform .25s ease; }
