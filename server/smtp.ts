@@ -26,6 +26,7 @@ export interface SmtpOptions {
   replyTo?: string;
   subject: string;
   text: string;
+  html?: string; // optional styled version; sent as multipart/alternative with the plain text
   timeoutMs?: number;
 }
 
@@ -66,6 +67,7 @@ export function buildMessage(o: SmtpOptions, now = new Date(), id = crypto.rando
   const from = noCtl(o.from);
   const name = noCtl(o.fromName || "").replace(/["<>\\]/g, "");
   const domain = from.split("@")[1] || "localhost";
+  const crlf = (t: string) => t.replace(/\r?\n/g, "\r\n");
   const headers = [
     `From: ${name ? `"${encodeHeaderText(name)}" ` : ""}<${from}>`,
     `To: ${o.to.map((a) => `<${noCtl(a)}>`).join(", ")}`,
@@ -74,11 +76,18 @@ export function buildMessage(o: SmtpOptions, now = new Date(), id = crypto.rando
     `Date: ${now.toUTCString().replace("GMT", "+0000")}`,
     `Message-ID: <${id}@${domain}>`,
     "MIME-Version: 1.0",
-    "Content-Type: text/plain; charset=utf-8",
-    "Content-Transfer-Encoding: base64",
     "Auto-Submitted: auto-generated",
   ];
-  return headers.join("\r\n") + "\r\n\r\n" + wrap76(b64text(o.text.replace(/\r?\n/g, "\r\n"))) + "\r\n";
+  const part = (type: string, content: string) =>
+    `Content-Type: ${type}; charset=utf-8\r\nContent-Transfer-Encoding: base64\r\n\r\n${wrap76(b64text(crlf(content)))}\r\n`;
+  if (o.html) {
+    // multipart/alternative: clients show the HTML part, or fall back to the plain text. Both are base64, so no content can
+    // look like a MIME boundary or an SMTP command.
+    const boundary = "=_tmo_" + id.replace(/-/g, "");
+    return headers.join("\r\n") + `\r\nContent-Type: multipart/alternative; boundary="${boundary}"\r\n\r\n` +
+      `--${boundary}\r\n${part("text/plain", o.text)}--${boundary}\r\n${part("text/html", o.html)}--${boundary}--\r\n`;
+  }
+  return headers.join("\r\n") + "\r\n" + part("text/plain", o.text);
 }
 
 class Session {

@@ -12,6 +12,7 @@
 //   RATE_LIMIT         (optional) KV namespace binding
 
 import { sendSmtp, cloudflareConnect, type Connect } from "../../server/smtp.ts";
+import { enquiryEmail, copyEmail } from "../../server/emails.ts";
 
 interface Env {
   SMTP_HOST?: string;
@@ -75,7 +76,7 @@ export const makeHandler = (connect: Connect) => async ({ request, env }: { requ
   const venue = clean(form.get("venue"), 160);
   const message = cleanBlock(form.get("message"), 1000);
 
-  if (!name || !message || !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email) || (eventDate && !/^\d{4}-\d{2}-\d{2}$/.test(eventDate))) {
+  if (!name || !message || !/^[^\s@<>"'`,;:()\[\]\\]+@[^\s@<>"'`,;:()\[\]\\]+\.[^\s@<>"'`,;:()\[\]\\]{2,}$/.test(email) || (eventDate && !/^\d{4}-\d{2}-\d{2}$/.test(eventDate))) {
     return json({ error: "Invalid input" }, 400);
   }
 
@@ -110,30 +111,26 @@ export const makeHandler = (connect: Connect) => async ({ request, env }: { requ
   const ref = "TMO-" + Array.from(crypto.getRandomValues(new Uint8Array(6)), (n) => ALPHABET[n % ALPHABET.length]).join("");
   const sendCopy = clean(form.get("send_copy"), 5) === "1";
 
-  const lines = [`Reference: ${ref}`, `Name: ${name}`, `Email: ${email}`];
-  if (organisation) lines.push(`Organisation: ${organisation}`);
-  if (eventDate) lines.push(`Event date: ${eventDate}`);
-  if (venue) lines.push(`Venue & city: ${venue}`);
-  lines.push("", message);
-  const text = lines.join("\n");
+  const enquiry = { ref, name, email, organisation, eventDate, venue, message };
+  const mail = enquiryEmail(enquiry);
 
   // One delivery function for both emails (SMTP preferred, Resend as fallback).
-  const deliver = async (rcpt: string[], subject: string, body: string, replyTo: string) => {
+  const deliver = async (rcpt: string[], subject: string, body: { text: string; html: string }, replyTo: string) => {
     if (useSmtp) {
       const port = parseInt(env.SMTP_PORT || "465", 10);
-      await sendSmtp({ host: env.SMTP_HOST!, port: port === 587 ? 587 : 465, user: env.SMTP_USER!, pass: env.SMTP_PASS!, from: env.BOOKING_FROM_EMAIL!, fromName: "TiMO ODV website", to: rcpt, replyTo, subject, text: body }, connect);
+      await sendSmtp({ host: env.SMTP_HOST!, port: port === 587 ? 587 : 465, user: env.SMTP_USER!, pass: env.SMTP_PASS!, from: env.BOOKING_FROM_EMAIL!, fromName: "TiMO ODV website", to: rcpt, replyTo, subject, text: body.text, html: body.html }, connect);
       return;
     }
     const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: { Authorization: `Bearer ${env.RESEND_API_KEY}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ from: `TiMO ODV website <${env.BOOKING_FROM_EMAIL}>`, to: rcpt, reply_to: replyTo, subject, text: body }),
+      body: JSON.stringify({ from: `TiMO ODV website <${env.BOOKING_FROM_EMAIL}>`, to: rcpt, reply_to: replyTo, subject, text: body.text, html: body.html }),
     });
     if (!res.ok) throw new Error(`provider ${res.status}`);
   };
 
   try {
-    await deliver(to, `Booking enquiry from ${name} [${ref}]`.slice(0, 150), text, email);
+    await deliver(to, `Booking enquiry from ${name} [${ref}]`.slice(0, 150), mail, email);
   } catch (e) {
     // Log the reason (never the password or the visitor's message).
     console.error("booking: send failed", e instanceof Error ? e.message : "unknown");
@@ -143,18 +140,8 @@ export const makeHandler = (connect: Connect) => async ({ request, env }: { requ
   // Optional copy for the sender. A failure here never fails the enquiry, which has already been delivered.
   let copy = false;
   if (sendCopy) {
-    const copyText = [
-      "Thanks for contacting TiMO ODV. This is a copy of your enquiry for your records.",
-      `Reference: ${ref}`,
-      "",
-      ...lines.slice(1),
-      "",
-      "We will reply to this email address. If you did not send this enquiry, you can ignore this message.",
-      "",
-      "TiMO ODV",
-    ].join("\n");
     try {
-      await deliver([email], `Your enquiry to TiMO ODV [${ref}]`, copyText, to[0]);
+      await deliver([email], `Your enquiry to TiMO ODV [${ref}]`, copyEmail(enquiry), to[0]);
       copy = true;
     } catch (e) {
       console.error("booking: copy failed", e instanceof Error ? e.message : "unknown");

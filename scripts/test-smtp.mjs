@@ -48,7 +48,14 @@ const connectTo = (port, tlsCalls) => async () => {
 };
 const base = (port, over = {}) => ({ host: 'mail.example.com', port: 465, user: 'website@timoodv.com', pass: 'secret-pass', from: 'website@timoodv.com', fromName: 'TiMO ODV website', to: ['bookings@timoodv.com', 'adrien@ce-mgmt.com'], replyTo: 'ann@example.com', subject: 'Booking enquiry from Ann', text: 'Hello\nline two', timeoutMs: 3000, ...over });
 const headersOf = (raw) => raw.slice(0, raw.indexOf('\r\n\r\n'));
-const bodyOf = (raw) => Buffer.from(raw.slice(raw.indexOf('\r\n\r\n') + 4).replace(/\r\n/g, ''), 'base64').toString('utf8');
+const dec64 = (x) => Buffer.from(x.replace(/\r\n/g, ''), 'base64').toString('utf8');
+const partsOf = (raw) => {
+  const m = headersOf(raw).match(/boundary="([^"]+)"/); const rest = raw.slice(raw.indexOf('\r\n\r\n') + 4);
+  if (!m) return { text: dec64(rest) };
+  const out = {}; for (const sg of rest.split('--' + m[1]).slice(1, -1)) { const t = /Content-Type: text\/(plain|html)/.exec(sg)[1]; out[t === 'plain' ? 'text' : 'html'] = dec64(sg.slice(sg.indexOf('\r\n\r\n') + 4)); }
+  return out;
+};
+const bodyOf = (raw) => partsOf(raw).text;
 
 // 1. happy path (AUTH PLAIN), both recipients, correct envelope, body round-trips
 let s = await fakeServer(); let tls = { n: 0 };
@@ -110,6 +117,11 @@ assert.match(bodyOf(s.messages[1]), new RegExp(`Reference: ${j.ref}`)); assert.m
 s = await fakeServer(); res = await post(makeHandler(connectTo(s.port, { n: 0 })), env(s.port)); j = await res.json(); assert.equal(j.copy, false); assert.equal(s.messages.length, 1, 'no copy unless asked'); assert.ok(j.ref); s.close();
 s = await fakeServer({ rejectRcpt: ['ann@'] }); res = await post(makeHandler(connectTo(s.port, { n: 0 })), env(s.port), { send_copy: '1' }); j = await res.json();
 assert.equal(res.status, 200, 'a failed copy never fails the enquiry'); assert.equal(j.copy, false); assert.equal(s.messages.length, 1); s.close();
+// styled HTML version rides along as multipart/alternative; hostile names stay escaped
+s = await fakeServer(); res = await post(makeHandler(connectTo(s.port, { n: 0 })), env(s.port), { send_copy: '1', name: '<script>alert(1)</script> Ann' }); j = await res.json();
+for (const raw of s.messages) { const p = partsOf(raw); assert.match(headersOf(raw), /Content-Type: multipart\/alternative; boundary="=_tmo_[0-9a-f]{32}"/); assert.ok(p.text && p.html, 'both parts present'); assert.ok(p.html.includes(j.ref)); assert.ok(!p.html.includes('<script>'), 'name escaped in html'); assert.ok(p.html.includes('&lt;script&gt;')); }
+assert.ok(!partsOf(s.messages[0]).html.includes('onerror')); s.close();
+s = await fakeServer(); res = await post(makeHandler(connectTo(s.port, { n: 0 })), env(s.port), { email: 'a"b@example.com' }); assert.equal(res.status, 400, 'quote in address refused'); s.close();
 const refs = new Set(); for (let i = 0; i < 20; i++) { s = await fakeServer(); refs.add((await (await post(makeHandler(connectTo(s.port, { n: 0 })), env(s.port))).json()).ref); s.close(); } assert.ok(refs.size > 15, 'references are random');
 globalThis.fetch = realFetch;
 console.log('smtp sender: all tests passed');
