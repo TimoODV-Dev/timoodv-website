@@ -16,16 +16,19 @@ Photos: put gallery photos in `public/img/gallery/` (1600x900) and swap the plac
 ```json
 [
   { "date": "2026-12-12", "venue": "Venue name", "city": "Johannesburg, ZA", "event": "Event name",
-    "status": "tickets", "url": "https://ticket-link" }
+    "status": "tickets", "url": "https://ticket-link", "uid": "calendar-event-id@google.com" }
 ]
 ```
-`status` can be `tickets`, `free` or `soldout` (sold out needs no url).
+`status` can be `tickets`, `free` or `soldout` (sold out needs no url). `uid` is optional and stops the same gig being added twice.
+Entries are checked at build time: a bad date, a `<` or `>`, a non-https link and so on is ignored (never published), and `npm test` fails so it is caught before merging. Run `npm test` to check.
+
+Gigs are normally added by Grok's daily task after Tim approves each one; see `GROK-TASKS.md`.
 
 ## What updates by itself
 Every build (every push, and every night at about 05:17 SAST) the site fetches:
 - **Latest video:** newest upload on the YouTube channel (no API key needed). The thumbnail is saved on our own domain.
 - **Latest releases:** from Spotify if `SPOTIFY_CLIENT_ID` and `SPOTIFY_CLIENT_SECRET` are set as build variables, otherwise from Apple Music (no key needed). Covers are saved on our own domain.
-- **Gallery:** his 6 newest Instagram photos (videos skipped) when the build variable `INSTAGRAM_ACCESS_TOKEN` is set. Photos are saved on our own domain and link back to the post. Until then, or if the token expires, the gallery shows placeholders. The token lasts 60 days and each nightly build tries to renew it.
+- **Gallery ("Social Gallery"):** his 6 newest Instagram posts when the build variable `INSTAGRAM_ACCESS_TOKEN` is set (videos and reels use their cover image). Photos are saved on our own domain and link back to the post. The token comes from a Meta system user and does not expire; if it is ever revoked, the gallery keeps its previous photos until a new token is saved.
 If a lookup fails, the previous content stays. The build never breaks because of it.
 
 ## One-time Cloudflare / GitHub setup

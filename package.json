@@ -9,7 +9,8 @@
     "fetch-data": "node scripts/fetch-data.mjs",
     "predev": "node scripts/fetch-data.mjs",
     "prebuild": "node scripts/fetch-data.mjs",
-    "test": "node scripts/test-fetch-data.mjs"
+    "validate:shows": "node scripts/validate-shows.mjs",
+    "test": "node scripts/test-fetch-data.mjs && node scripts/test-shows.mjs && node scripts/validate-shows.mjs"
   },
   "dependencies": {
     "astro": "^5.1.0"
