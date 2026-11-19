@@ -66,16 +66,19 @@
   const eggList = (document.body.dataset.eggVideos || '').split(',').filter((p) => /^\/video\/[\w.-]+\.(mp4|webm)$/.test(p));
   if (eggList.length) {
     const O = { x0: 0.495, x1: 0.785, y0: 0.05, y1: 0.98 }; // the brush-ring O inside the logo image
-    let clicks = 0; let last = 0; let dlg = null;
+    let clicks = 0; let last = 0; let dlg = null; let lastPick = -1;
     const openEgg = () => {
       if (dlg) return;
-      let i = 0;
+      // One random clip per open; never the same clip twice in a row (when there is a choice).
+      let i = Math.floor(Math.random() * eggList.length);
+      if (eggList.length > 1 && i === lastPick) i = (i + 1 + Math.floor(Math.random() * (eggList.length - 1))) % eggList.length;
+      lastPick = i;
       dlg = document.createElement('dialog'); dlg.className = 'egg'; dlg.setAttribute('aria-label', 'TiMO ODV cartoons');
       const v = document.createElement('video'); v.className = 'egg__video'; v.controls = true; v.playsInline = true; v.preload = 'auto';
       const x = document.createElement('button'); x.className = 'egg__close'; x.type = 'button'; x.setAttribute('aria-label', 'Close'); x.textContent = '\u00d7';
       const closeEgg = () => { v.pause(); v.removeAttribute('src'); v.load(); dlg.close(); dlg.remove(); dlg = null; };
       const play = () => { v.src = eggList[i]; v.play().catch(() => {}); };
-      v.addEventListener('ended', () => { i += 1; if (i < eggList.length) play(); else closeEgg(); });
+      v.addEventListener('ended', closeEgg);
       v.addEventListener('error', closeEgg);
       x.addEventListener('click', closeEgg);
       dlg.addEventListener('click', (e) => { if (e.target === dlg) closeEgg(); });
