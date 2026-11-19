@@ -1,9 +1,26 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import legal from '../content/legal.json';
+const updated = new Date(legal.updated + 'T12:00:00Z').toLocaleDateString('en-ZA', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
 ---
 <Layout title="Cookie Policy — TiMO ODV">
   <section class="legal"><div class="container">
     <h1>Cookie Policy</h1>
-      <p>This site does not set non-essential cookies. Analytics are cookieless. YouTube embeds load only after you click play and use the privacy-enhanced youtube-nocookie.com domain.</p>
+    <p class="legal__meta">Last updated {updated}</p>
+
+    <p>Cookies are small files a website can save on your device. <strong>This site does not set any cookies of its own</strong>, and it does not use advertising, tracking or analytics cookies. Because of that, there is no cookie banner and nothing for you to accept.</p>
+
+    <h2>What can still happen</h2>
+    <p>A few features load a service run by another company. We use them only when they are needed:</p>
+    <ul>
+      <li><strong>Contact form check (Cloudflare Turnstile).</strong> When you scroll to the contact form, a Cloudflare check runs to confirm you are not a bot. It is designed to work without cookies, and it is required for the form to be safe from spam. Cloudflare may also use short-lived security cookies on its own services for the same bot-protection purpose. These are strictly necessary and are not used for advertising.</li>
+      <li><strong>YouTube video.</strong> The video on this page does not load until you press play. It then loads from YouTube's privacy-enhanced domain (youtube-nocookie.com), which is designed not to store cookies until you interact with the player. YouTube (Google) may still receive information such as your IP address once the video loads, under Google's own policies.</li>
+      <li><strong>Links to other services.</strong> Spotify, Apple Music, YouTube Music, Instagram and similar links take you to their sites, which set their own cookies under their own policies.</li>
+    </ul>
+    <p>Fonts, images, photos and videos on this site are served from our own domain. We do not load them from other companies, so they do not contact outside services.</p>
+
+    <h2>Your choices</h2>
+    <p>You can block or delete cookies in your browser settings at any time. The site works without cookies. If you block Cloudflare's check, the contact form will not send, and you can contact us by another route instead.</p>
+    <p>For how we handle personal information, see our <a href="/privacy">Privacy Policy</a>.</p>
   </div></section>
 </Layout>

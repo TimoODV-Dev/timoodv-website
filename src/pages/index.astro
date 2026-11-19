@@ -251,7 +251,7 @@ const turnstileKey = import.meta.env.PUBLIC_TURNSTILE_SITEKEY || '';
           <input id="f-website" name="website" type="text" tabindex="-1" autocomplete="off">
         </div>
         <div class="form__turnstile" data-turnstile-slot>
-          {turnstileKey && <div class="cf-turnstile" data-sitekey={turnstileKey} data-theme="dark"></div>}
+          {turnstileKey && <div data-turnstile-widget data-sitekey={turnstileKey}></div>}
         </div>
         <p class="form__privacy">We only use these details to respond to your enquiry. See our <a href="/privacy">Privacy Policy</a>.</p>
         <button class="btn btn--solid" type="submit">Send enquiry
@@ -261,5 +261,4 @@ const turnstileKey = import.meta.env.PUBLIC_TURNSTILE_SITEKEY || '';
       </form>
     </div>
   </section>
-  {turnstileKey && <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>}
 </Layout>

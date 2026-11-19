@@ -3,10 +3,10 @@
 // per-IP rate limit (if a KV namespace is bound) and email delivery through Resend.
 //
 // Secrets / bindings (Cloudflare dashboard -> Pages -> Settings):
-//   TURNSTILE_SECRET   Turnstile secret key
-//   RESEND_API_KEY     API key from resend.com (domain timoodv.com verified)
-//   BOOKING_TO_EMAIL   destination, e.g. bookings@timoodv.com
-//   BOOKING_FROM_EMAIL sender on the verified domain, e.g. website@timoodv.com
+//   TURNSTILE_SECRET   Turnstile secret key (REQUIRED: without it the form refuses to send)
+//   RESEND_API_KEY     API key from resend.com
+//   BOOKING_TO_EMAIL   destination inbox. Until a domain is verified in Resend this must be the email the Resend account was created with
+//   BOOKING_FROM_EMAIL sender: onboarding@resend.dev until a domain is verified, then e.g. website@yourdomain
 //   RATE_LIMIT         (optional) KV namespace binding
 
 interface Env {
@@ -31,6 +31,16 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
   // Same-origin only.
   const origin = request.headers.get("Origin");
   if (origin && new URL(origin).host !== new URL(request.url).host) return json({ error: "Forbidden" }, 403);
+
+  // Small forms only.
+  const len = parseInt(request.headers.get("Content-Length") || "0", 10);
+  if (len > 20000) return json({ error: "Too large" }, 413);
+
+  // Human verification is mandatory: without a secret the form is closed rather than left open to spam.
+  if (!env.TURNSTILE_SECRET) {
+    console.error("booking: TURNSTILE_SECRET not configured");
+    return json({ error: "The enquiry form is temporarily unavailable. Please try again later." }, 503);
+  }
 
   const ip = request.headers.get("CF-Connecting-IP") || "unknown";
   if (env.RATE_LIMIT) {
@@ -57,18 +67,23 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
     return json({ error: "Invalid input" }, 400);
   }
 
-  // Turnstile: when a secret is configured the token is REQUIRED (a missing token must not skip the check).
-  if (env.TURNSTILE_SECRET) {
-    const token = clean(form.get("cf-turnstile-response"), 2048);
-    if (!token) return json({ error: "Verification failed" }, 400);
+  // Turnstile: the token is required and verified server-side (single use, tied to this site's hostname).
+  const token = clean(form.get("cf-turnstile-response"), 2048);
+  if (!token) return json({ error: "Please complete the verification check and try again." }, 400);
+  let verified = false;
+  try {
     const verify = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ secret: env.TURNSTILE_SECRET, response: token, remoteip: ip }),
     });
-    const result = (await verify.json()) as { success?: boolean };
-    if (!result.success) return json({ error: "Verification failed" }, 400);
+    const result = (await verify.json()) as { success?: boolean; hostname?: string };
+    verified = !!result.success && (!result.hostname || result.hostname === new URL(request.url).hostname);
+  } catch {
+    console.error("booking: turnstile verification request failed");
+    return json({ error: "Could not run the verification check. Please try again." }, 502);
   }
+  if (!verified) return json({ error: "Verification failed. Please try again." }, 400);
 
   // Never report success if the message can't actually be delivered.
   if (!env.RESEND_API_KEY || !env.BOOKING_TO_EMAIL || !env.BOOKING_FROM_EMAIL) {

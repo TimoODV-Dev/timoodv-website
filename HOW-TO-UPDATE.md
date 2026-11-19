@@ -33,8 +33,17 @@ If a lookup fails, the previous content stays. The build never breaks because of
 
 ## One-time Cloudflare / GitHub setup
 1. Pages build command: `npm run build`, output folder `dist`.
-2. Pages -> Settings -> Variables: `PUBLIC_TURNSTILE_SITEKEY` (build), and secrets `TURNSTILE_SECRET`, `RESEND_API_KEY`, `BOOKING_TO_EMAIL`, `BOOKING_FROM_EMAIL`.
+2. **Contact form** (all five are needed; without them the form shows "temporarily unavailable" and sends nothing):
+   - `PUBLIC_TURNSTILE_SITEKEY`: Pages **build variable** (the public site key from Cloudflare -> Turnstile -> Add widget).
+   - `TURNSTILE_SECRET`: Pages **encrypted secret** (the secret key from the same widget).
+   - `RESEND_API_KEY`: encrypted secret from resend.com (sending access only).
+   - `BOOKING_TO_EMAIL`: the inbox that gets enquiries. Until a domain is verified in Resend this must be the email address the Resend account was created with.
+   - `BOOKING_FROM_EMAIL`: `onboarding@resend.dev` until a domain is verified in Resend, then an address on that domain.
+   Add the widget hostnames in Turnstile: the live domain and `timoodv-website.pages.dev`.
 3. Optional: `SPOTIFY_CLIENT_ID` / `SPOTIFY_CLIENT_SECRET` (create an app at developer.spotify.com; needs a Premium account on the owner), and `YOUTUBE_CHANNEL_ID` if auto-detect fails.
 4. Nightly refresh: create a Pages deploy hook and save it as the GitHub secret `CF_DEPLOY_HOOK` (see `.github/workflows/refresh.yml`).
+
+## Legal pages
+Privacy, Terms and Cookie pages read their details from `src/content/legal.json` (who is responsible, contact email, last-updated date, how long enquiries are kept). Set `contactEmail` once he has a real address on a domain he owns. Update `updated` whenever the wording or what the site collects changes. If you add analytics, a newsletter, a new embed or any other service that handles visitor data, the Privacy and Cookie pages must be updated first.
 
 Do not edit anything outside `src/content/` unless you know what you are doing.

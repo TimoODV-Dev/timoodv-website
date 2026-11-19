@@ -102,27 +102,63 @@
   // Footer year
   document.querySelectorAll('[data-year]').forEach((n) => { n.textContent = new Date().getFullYear(); });
 
-  // Booking form: progressive enhancement (server still validates everything)
+  // Booking form: progressive enhancement (the server still validates everything).
   const form = document.querySelector('[data-booking-form]');
   const status = document.querySelector('[data-form-status]');
   if (form && status) {
+    const holder = form.querySelector('[data-turnstile-widget]');
+    const sitekey = holder ? holder.dataset.sitekey : '';
+    let widgetId = null; let tsState = sitekey ? 'idle' : 'off'; // idle | loading | ready | failed | off
+    const setStatus = (msg, cls) => { status.className = 'form__status' + (cls ? ' ' + cls : ''); status.textContent = msg; };
+    // The human check (Cloudflare Turnstile) only loads once the visitor reaches the form, so nobody else contacts Cloudflare.
+    const loadTurnstile = () => {
+      if (tsState !== 'idle') return;
+      tsState = 'loading';
+      const sc = document.createElement('script');
+      sc.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit'; sc.async = true; sc.defer = true;
+      sc.onload = () => {
+        try { widgetId = window.turnstile.render(holder, { sitekey, theme: 'dark', 'error-callback': () => { tsState = 'failed'; }, 'expired-callback': () => {} }); tsState = 'ready'; }
+        catch { tsState = 'failed'; }
+      };
+      sc.onerror = () => { tsState = 'failed'; };
+      document.head.append(sc);
+    };
+    if (holder) {
+      if ('IntersectionObserver' in window) {
+        const io = new IntersectionObserver((en) => { if (en.some((x) => x.isIntersecting)) { loadTurnstile(); io.disconnect(); } }, { rootMargin: '400px' });
+        io.observe(form);
+      } else loadTurnstile();
+      form.addEventListener('focusin', loadTurnstile, { once: true });
+    }
+    const submitBtn = form.querySelector('[type="submit"]');
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
-      status.className = 'form__status';
       const bad = [...form.querySelectorAll('[required]')].filter((el) => !el.checkValidity());
       form.querySelectorAll('[aria-invalid]').forEach((el) => el.removeAttribute('aria-invalid'));
       if (bad.length) {
         bad.forEach((el) => el.setAttribute('aria-invalid', 'true'));
-        status.textContent = 'Please complete the highlighted fields.'; status.classList.add('is-error');
-        bad[0].focus(); return;
+        setStatus('Please complete the highlighted fields.', 'is-error'); bad[0].focus(); return;
       }
-      status.textContent = 'Sending…';
+      const token = form.querySelector('[name="cf-turnstile-response"]');
+      if (tsState !== 'off' && !(token && token.value)) {
+        if (tsState === 'failed') setStatus('The verification check could not load. Please disable any blocker for this site, or try another browser, then reload.', 'is-error');
+        else { loadTurnstile(); setStatus('Please wait for the verification check to finish, then send again.', 'is-error'); }
+        return;
+      }
+      setStatus('Sending\u2026'); if (submitBtn) submitBtn.disabled = true;
       try {
         const res = await fetch(form.action, { method: 'POST', body: new FormData(form), headers: { Accept: 'application/json' }, credentials: 'same-origin' });
-        if (!res.ok) throw new Error('bad status');
-        form.reset(); status.textContent = 'Thanks — your enquiry has been sent.'; status.classList.add('is-ok');
-      } catch {
-        status.textContent = 'Something went wrong. Please try again or email us directly.'; status.classList.add('is-error');
+        if (!res.ok) {
+          let msg = ''; try { msg = (await res.json()).error || ''; } catch {}
+          throw new Error(msg || 'bad status');
+        }
+        form.reset(); setStatus('Thanks \u2014 your enquiry has been sent. We will reply to the email address you gave.', 'is-ok');
+      } catch (err) {
+        const known = err && err.message && err.message !== 'bad status' && !/Failed to fetch|NetworkError|Load failed/i.test(err.message);
+        setStatus(known ? err.message : 'Something went wrong. Please try again in a moment.', 'is-error');
+      } finally {
+        if (submitBtn) submitBtn.disabled = false;
+        if (window.turnstile && widgetId !== null) { try { window.turnstile.reset(widgetId); } catch {} } // tokens are single-use
       }
     });
   }
