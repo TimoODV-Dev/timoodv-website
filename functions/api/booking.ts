@@ -32,7 +32,7 @@ const recipients = (v?: string) =>
   [...new Set((v || "").split(/[,;\s]+/).map((x) => x.trim().toLowerCase()).filter((x) => /^[^\s@<>]+@[^\s@<>]+\.[^\s@<>]{2,}$/.test(x)))].slice(0, 5);
 
 const json = (body: unknown, status = 200) =>
-  new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json", "Cache-Control": "no-store" } });
+  new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json", "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff", "Content-Security-Policy": "default-src 'none'; frame-ancestors 'none'", "Referrer-Policy": "no-referrer" } });
 
 // Single-line, bounded, no control characters (prevents header/subject injection).
 const clean = (v: FormDataEntryValue | null, max: number) =>
@@ -44,7 +44,11 @@ const cleanBlock = (v: FormDataEntryValue | null, max: number) =>
 export const makeHandler = (connect: Connect) => async ({ request, env }: { request: Request; env: Env }): Promise<Response> => {
   // Same-origin only.
   const origin = request.headers.get("Origin");
-  if (origin && new URL(origin).host !== new URL(request.url).host) return json({ error: "Forbidden" }, 403);
+  if (origin) {
+    let ok = false;
+    try { ok = new URL(origin).host === new URL(request.url).host; } catch { /* malformed or "null" origin */ }
+    if (!ok) return json({ error: "Forbidden" }, 403);
+  }
 
   // Small forms only.
   const len = parseInt(request.headers.get("Content-Length") || "0", 10);
@@ -65,7 +69,12 @@ export const makeHandler = (connect: Connect) => async ({ request, env }: { requ
   }
 
   let form: FormData;
-  try { form = await request.formData(); } catch { return json({ error: "Invalid input" }, 400); }
+  try {
+    // Measure the real body, not just the Content-Length header (which can be missing or wrong).
+    const raw = await request.arrayBuffer();
+    if (raw.byteLength > 20000) return json({ error: "Too large" }, 413);
+    form = await new Response(raw, { headers: { "Content-Type": request.headers.get("Content-Type") || "" } }).formData();
+  } catch { return json({ error: "Invalid input" }, 400); }
 
   // Honeypot: pretend success so bots learn nothing.
   if (clean(form.get("website"), 200)) return json({ ok: true });

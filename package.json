@@ -13,6 +13,6 @@
     "test": "node scripts/test-fetch-data.mjs && node scripts/test-shows.mjs && node scripts/test-booking.mjs && node scripts/test-smtp.mjs && node scripts/test-emails.mjs && node scripts/validate-shows.mjs"
   },
   "dependencies": {
-    "astro": "^5.1.0"
+    "astro": "^7.4.13"
   }
 }
