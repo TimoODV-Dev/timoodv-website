@@ -31,7 +31,9 @@ if (showProblems.length) console.warn('[shows] ignored:', showProblems.join('; '
 const upcoming = shows
   .filter((s) => s.date && new Date(s.date + 'T23:59:59+02:00') >= new Date())
   .sort((a, b) => a.date.localeCompare(b.date));
-const turnstileKey = import.meta.env.PUBLIC_TURNSTILE_SITEKEY || '';
+// The Turnstile site key is public by design (it is printed in the page), so it lives in site.json. An env var can override it.
+const rawKey = import.meta.env.PUBLIC_TURNSTILE_SITEKEY || site.turnstileSiteKey || '';
+const turnstileKey = /^[0-9A-Za-z_-]{10,60}$/.test(rawKey) ? rawKey : '';
 ---
 
 <Layout>
