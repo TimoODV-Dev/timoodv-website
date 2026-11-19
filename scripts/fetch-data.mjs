@@ -79,6 +79,8 @@ async function latestVideo() {
 
 // ---------- Releases ----------
 const yearOf = (d) => (d || '').slice(0, 4);
+// Trim to n characters by code point (never cuts an emoji in half) and drop any stray half-emoji, so the JSON we write is always valid.
+export const clip = (v, n) => Array.from(String(v ?? '')).slice(0, n).join('').replace(/[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/g, '');
 const slug = (s) => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 40);
 
 export function mapSpotify(items) {
@@ -157,7 +159,7 @@ export function mapInstagram(items) {
     .map((m) => ({
       mediaUrl: imageOf(m),
       url: /^https:\/\/(www\.)?instagram\.com\//.test(m.permalink || '') ? m.permalink : '',
-      alt: ((m.caption || '').replace(/[#@]\S+/g, '').replace(/\s+/g, ' ').trim().slice(0, 110)) || 'Photo of TiMO ODV',
+      alt: clip((m.caption || '').replace(/[#@]\S+/g, '').replace(/\s+/g, ' ').trim(), 110).trim() || 'Photo of TiMO ODV',
     }));
 }
 async function instagramGallery() {
