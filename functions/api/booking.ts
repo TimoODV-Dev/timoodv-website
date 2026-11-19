@@ -5,7 +5,7 @@
 // Secrets / bindings (Cloudflare dashboard -> Pages -> Settings):
 //   TURNSTILE_SECRET   Turnstile secret key (REQUIRED: without it the form refuses to send)
 //   RESEND_API_KEY     API key from resend.com
-//   BOOKING_TO_EMAIL   destination inbox. Until a domain is verified in Resend this must be the email the Resend account was created with
+//   BOOKING_TO_EMAIL   destination inbox(es), comma-separated (max 5), e.g. bookings@timoodv.com,adrien@ce-mgmt.com. Until a domain is verified in Resend this must be the email the Resend account was created with
 //   BOOKING_FROM_EMAIL sender: onboarding@resend.dev until a domain is verified, then e.g. website@yourdomain
 //   RATE_LIMIT         (optional) KV namespace binding
 
@@ -16,6 +16,10 @@ interface Env {
   BOOKING_FROM_EMAIL?: string;
   RATE_LIMIT?: KVNamespace;
 }
+
+// BOOKING_TO_EMAIL may hold several addresses separated by commas, semicolons or spaces.
+const recipients = (v?: string) =>
+  [...new Set((v || "").split(/[,;\s]+/).map((x) => x.trim().toLowerCase()).filter((x) => /^[^\s@<>]+@[^\s@<>]+\.[^\s@<>]{2,}$/.test(x)))].slice(0, 5);
 
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json", "Cache-Control": "no-store" } });
@@ -86,7 +90,8 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
   if (!verified) return json({ error: "Verification failed. Please try again." }, 400);
 
   // Never report success if the message can't actually be delivered.
-  if (!env.RESEND_API_KEY || !env.BOOKING_TO_EMAIL || !env.BOOKING_FROM_EMAIL) {
+  const to = recipients(env.BOOKING_TO_EMAIL);
+  if (!env.RESEND_API_KEY || !to.length || !env.BOOKING_FROM_EMAIL) {
     console.error("booking: email delivery not configured");
     return json({ error: "Booking form is temporarily unavailable. Please email us directly." }, 503);
   }
@@ -103,7 +108,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
     headers: { Authorization: `Bearer ${env.RESEND_API_KEY}`, "Content-Type": "application/json" },
     body: JSON.stringify({
       from: `TiMO ODV website <${env.BOOKING_FROM_EMAIL}>`,
-      to: [env.BOOKING_TO_EMAIL],
+      to,
       reply_to: email,
       subject: `Booking enquiry from ${name}`.slice(0, 150),
       text,
