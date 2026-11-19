@@ -111,8 +111,8 @@ res = await post(makeHandler(connectTo(1, { n: 0 })), env(1, { SMTP_PASS: undefi
 s = await fakeServer(); res = await post(makeHandler(connectTo(s.port, { n: 0 })), env(s.port)); let j = await res.json();
 assert.equal(res.status, 200); assert.match(j.ref, /^TMO-[A-HJ-KM-NP-Z2-9]{6}$/); assert.equal(j.copy, true); assert.equal(s.messages.length, 2);
 assert.match(headersOf(s.messages[0]), new RegExp(`Subject: Booking enquiry from Ann \\[${j.ref}\\]`)); assert.match(headersOf(s.messages[0]), /To: <bookings@timoodv.com>, <adrien@ce-mgmt.com>/);
-assert.match(headersOf(s.messages[1]), /^From: "TiMO ODV website" <website@timoodv.com>/); assert.match(headersOf(s.messages[1]), /To: <ann@example.com>\r\n/); assert.ok(!/adrien|Bcc/i.test(headersOf(s.messages[1])), 'copy goes only to the sender');
-assert.match(headersOf(s.messages[1]), new RegExp(`Subject: Your enquiry to TiMO ODV \\[${j.ref}\\]`)); assert.match(headersOf(s.messages[1]), /Reply-To: <bookings@timoodv.com>/);
+assert.match(headersOf(s.messages[1]), /^From: "TiMO ODV | Booking" <website@timoodv.com>/); assert.match(headersOf(s.messages[1]), /To: <ann@example.com>\r\n/); assert.ok(!/adrien|Bcc/i.test(headersOf(s.messages[1])), 'copy goes only to the sender');
+assert.match(headersOf(s.messages[1]), new RegExp(`Subject: Your booking request \\[${j.ref}\\]`)); assert.match(headersOf(s.messages[1]), /Reply-To: <bookings@timoodv.com>/);
 assert.match(bodyOf(s.messages[1]), new RegExp(`Reference: ${j.ref}`)); assert.match(bodyOf(s.messages[1]), /Name: Ann/); assert.match(bodyOf(s.messages[0]), new RegExp(`Reference: ${j.ref}`)); s.close();
 s = await fakeServer({ rejectRcpt: ['ann@'] }); res = await post(makeHandler(connectTo(s.port, { n: 0 })), env(s.port)); j = await res.json();
 assert.equal(res.status, 200, 'a failed copy never fails the enquiry'); assert.equal(j.copy, false); assert.equal(s.messages.length, 1); s.close();
