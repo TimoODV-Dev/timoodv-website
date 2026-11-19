@@ -4,4 +4,7 @@ pages_build_output_dir = "dist"
 
 # Booking Worker is a separate Pages Function or Worker.
 # Secrets to set in Cloudflare dashboard:
-# TURNSTILE_SECRET, BOOKING_TO_EMAIL (bookings@timoodv.com)
+# Secrets (Pages -> Settings -> Variables and Secrets):
+#   TURNSTILE_SECRET, RESEND_API_KEY, BOOKING_TO_EMAIL, BOOKING_FROM_EMAIL
+# Build variables (used at build time only):
+#   PUBLIC_TURNSTILE_SITEKEY, SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET (optional), YOUTUBE_CHANNEL_ID (optional)

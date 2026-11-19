@@ -5,7 +5,11 @@
   "scripts": {
     "dev": "astro dev",
     "build": "astro build",
-    "preview": "astro preview"
+    "preview": "astro preview",
+    "fetch-data": "node scripts/fetch-data.mjs",
+    "predev": "node scripts/fetch-data.mjs",
+    "prebuild": "node scripts/fetch-data.mjs",
+    "test": "node scripts/test-fetch-data.mjs"
   },
   "dependencies": {
     "astro": "^5.1.0"
