@@ -19,9 +19,10 @@ These are the standing instructions for Grok's two daily tasks. Follow them exac
 6. **Links:** the Spotify, Apple Music, YouTube, Instagram and other links in the Listen/Social sections respond (any 2xx/3xx; some social sites block bots, so a 403 or 429 from them is not a failure).
 
 ## Reporting
-- **All good:** send Tim one short line, e.g. "Health check OK, 22 Nov, all 6 checks passed". Nothing more.
-- **Anything wrong:** tell Tim straight away, in plain words: what failed, what you saw, and since when if you can tell. Do not try to fix it. Do not guess at causes beyond what you saw.
+- **All good: say nothing.** Do not message Tim when every check passes. No "all OK" lines, no daily summaries.
+- **Anything wrong:** tell Tim straight away, in plain words: what failed, what you saw, and since when if you can tell. Do not try to fix it. Do not guess at causes beyond what you saw. If the same problem is still there the next day, say so once more, then only repeat it weekly until it is fixed.
 - **Booking-form problems cannot be tested without sending a real enquiry.** If Tim wants a form test, he will do it himself or ask for one.
+- The gig-calendar task (B) is separate: it speaks to Tim only when there is a new event to ask about.
 
 # B. Daily gig calendar
 
