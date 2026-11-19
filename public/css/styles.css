@@ -329,7 +329,7 @@ button { font: inherit; color: inherit; }
 .about__media { position: relative; }
 .about__media img { display: block; width: 100%; height: auto; aspect-ratio: 2 / 3; object-fit: cover; object-position: 50% 25%; background: var(--bg-3); -webkit-mask-image: linear-gradient(to right, transparent 0, #000 16%, #000 84%, transparent 100%); mask-image: linear-gradient(to right, transparent 0, #000 16%, #000 84%, transparent 100%); }
 .about__media::before { /* offset frame */
-  content: ""; position: absolute; inset: 1.25rem -1.25rem -1.25rem 1.25rem; border: 1.5px solid var(--red); z-index: -1;
+  content: ""; position: absolute; inset: 1.25rem -1.25rem -1.25rem 1.25rem; border: solid var(--red); border-width: 0 1.5px 1.5px 0; z-index: -1; /* right + bottom only */
 }
 .about__media::after { /* blend the photo's black into the page */
   content: ""; position: absolute; inset: 0; pointer-events: none;
