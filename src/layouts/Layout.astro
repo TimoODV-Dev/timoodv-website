@@ -32,7 +32,7 @@ import links from '../content/links.json';
   <a class="skip-link" href="#main">Skip to content</a>
   <header class="site-header" data-header>
     <div class="site-header__inner">
-      <a class="logo" href="#top" aria-label="TIMO ODV — home">
+      <a class="logo" href="/#top" aria-label="TIMO ODV — home">
         <img src="/img/logo-white.svg" alt="TIMO ODV" width="1428" height="680">
       </a>
       <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav" data-nav-toggle>
@@ -43,7 +43,7 @@ import links from '../content/links.json';
       <nav class="site-nav" id="site-nav" aria-label="Main" data-nav>
         <ul class="site-nav__list">
           <li><a href="#about">About</a></li>
-          <li><a href="#dates">Dates</a></li>
+          <li><a href="#dates">Events</a></li>
           <li><a href="#music">Music</a></li>
           <li><a href="#visuals">Visuals</a></li>
           <li><a href="#contact">Contact</a></li>
@@ -62,14 +62,16 @@ import links from '../content/links.json';
     <slot />
   </main>
   <footer class="site-footer">
-    <div class="container site-footer__inner">
-      <a class="logo logo--footer" href="#top"><img src="/img/logo-white.svg" alt="TIMO ODV" width="1428" height="680"></a>
-      <nav class="footer-nav" aria-label="Legal">
-        <a href="/privacy">Privacy</a>
-        <a href="/terms">Terms</a>
-        <a href="/cookies">Cookies</a>
-      </nav>
-      <p class="site-footer__copy">© <span data-year>2026</span> TIMO ODV</p>
+    <div class="container">
+      <img class="site-footer__wordmark" src="/img/logo-white.svg" alt="" width="1428" height="680" loading="lazy">
+      <div class="site-footer__bar">
+        <p>&copy; <span data-year>2026</span> TIMO ODV. All rights reserved.</p>
+        <ul class="site-footer__legal">
+          <li><a href="/privacy">Privacy Policy</a></li>
+          <li><a href="/terms">Terms of Use</a></li>
+          <li><a href="/cookies">Cookie Policy</a></li>
+        </ul>
+      </div>
     </div>
   </footer>
 </body>

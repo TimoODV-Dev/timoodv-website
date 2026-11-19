@@ -1,8 +1,22 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import links from '../content/links.json';
-import releases from '../content/releases.json';
-import bio from '../content/bio.md?raw';
+import site from '../content/site.json';
+import manualReleases from '../content/releases.json';
+import autoReleases from '../content/releases.auto.json';
+import shows from '../content/shows.json';
+import video from '../content/latest-video.json';
+import { Content as Bio } from '../content/bio.md';
+
+// Latest releases come from Spotify / Apple Music at build time; releases.json is a manual fallback.
+const releases = (autoReleases.length ? autoReleases : manualReleases).slice(0, 4);
+const videoTitle = video.title || 'Latest video';
+const videoId = /^[A-Za-z0-9_-]{11}$/.test(video.id || '') ? video.id : '';
+const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const upcoming = shows
+  .filter((s) => s.date && new Date(s.date + 'T23:59:59+02:00') >= new Date())
+  .sort((a, b) => a.date.localeCompare(b.date));
+const turnstileKey = import.meta.env.PUBLIC_TURNSTILE_SITEKEY || '';
 ---
 
 <Layout>
@@ -40,35 +54,44 @@ import bio from '../content/bio.md?raw';
         <p class="eyebrow">01 — Music</p>
         <h2 class="section-title" id="music-title">New Official Clip</h2>
       </header>
-      <div class="video-facade" data-video-id="VIDEO_ID_HERE" data-video-title="TRACK TITLE (Official Video)">
-        <img class="video-facade__poster" src="/img/video-poster-placeholder.svg" alt="" width="1600" height="900" loading="lazy">
-        <button class="video-facade__play" type="button" aria-label="Play video: TRACK TITLE (Official Video)">
+      {videoId ? (
+      <div class="video-facade" data-video-id={videoId} data-video-title={videoTitle}>
+        <img class="video-facade__poster" src={video.thumb || '/img/video-poster-placeholder.svg'} alt="" width="1280" height="720" loading="lazy">
+        <button class="video-facade__play" type="button" aria-label={`Play video: ${videoTitle}`}>
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
         </button>
         <div class="video-facade__meta">
-          <span class="tag">Official video</span>
-          <h3 class="video-facade__title">Track Title</h3>
+          <span class="tag">Latest video</span>
+          <h3 class="video-facade__title">{videoTitle}</h3>
           <p class="video-facade__note">Plays from YouTube. Loading the video shares data with Google.</p>
         </div>
       </div>
+      ) : (
+      <p class="empty-note">New video coming soon. <a href={links.youtube} rel="noopener noreferrer" target="_blank">Watch on YouTube</a></p>
+      )}
+
       <header class="section-head section-head--row">
         <h2 class="section-title section-title--sm">Latest Releases</h2>
         <a class="link-arrow" href="#listen">All platforms
           <svg class="icon icon--arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12h16m-6-6 6 6-6 6"/></svg>
         </a>
       </header>
+      {releases.length ? (
       <ul class="release-grid">
         {releases.map((r) => (
           <li class="release">
             <a class="release__link" href={r.url} rel="noopener noreferrer" target="_blank">
-              <span class="release__cover"><img src={r.cover} alt={`Cover art for ${r.title}`} width="1000" height="1000" loading="lazy"></span>
+              <span class="release__cover"><img src={r.cover} alt={`Cover art for ${r.title}`} width="600" height="600" loading="lazy"></span>
               <span class="release__type">{r.type} · {r.year}</span>
               <span class="release__title">{r.title}</span>
-              <span class="release__label">{r.label}</span>
+              {r.label && <span class="release__label">{r.label}</span>}
             </a>
           </li>
         ))}
       </ul>
+      ) : (
+      <p class="empty-note">Latest releases are on <a href={links.spotify} rel="noopener noreferrer" target="_blank">Spotify</a> and <a href={links.appleMusic} rel="noopener noreferrer" target="_blank">Apple Music</a>.</p>
+      )}
     </div>
   </section>
 
@@ -82,34 +105,46 @@ import bio from '../content/bio.md?raw';
         </div>
         <p class="section-aside">All times SAST</p>
       </header>
+      {upcoming.length ? (
       <ol class="show-list">
-        <li class="show">
-          <time class="show__date" datetime="2026-12-12">
-            <span class="show__day">12</span>
-            <span class="show__month">Dec</span>
-          </time>
-          <div class="show__info">
-            <h3 class="show__venue">PLACEHOLDER Venue Name</h3>
-            <p class="show__city">Cape Town</p>
-          </div>
-          <span class="btn btn--disabled">Sold out</span>
-        </li>
+        {upcoming.map((s) => {
+          const d = new Date(s.date + 'T12:00:00+02:00');
+          return (
+          <li class="show">
+            <time class="show__date" datetime={s.date}><span class="show__day">{String(d.getUTCDate()).padStart(2, '0')}</span><span class="show__month">{months[d.getUTCMonth()]}</span></time>
+            <div class="show__info">
+              <p class="show__venue">{s.venue}</p>
+              <p class="show__city">{s.city}</p>
+            </div>
+            <p class="show__event">{s.event || ''}</p>
+            {s.status === 'soldout'
+              ? <span class="btn btn--small btn--disabled" aria-disabled="true">Sold out</span>
+              : s.url ? <a class="btn btn--small" href={s.url} rel="noopener noreferrer" target="_blank">{s.status === 'free' ? 'Details' : 'Tickets'}</a> : null}
+          </li>
+          );
+        })}
       </ol>
+      ) : (
+      <p class="show-empty">No dates announced right now. <a href="#contact">Book TiMO ODV</a> for your event.</p>
+      )}
     </div>
   </section>
 
   <!-- STORY -->
   <section class="section section--about" id="about" aria-labelledby="about-title">
-    <div class="container">
-      <header class="section-head">
+    <div class="container about">
+      <figure class="about__media">
+        <img src="/images/portrait.jpg" alt="Portrait of TiMO ODV" width="1200" height="1500" loading="lazy">
+        <figcaption>Cape Town, South Africa</figcaption>
+      </figure>
+      <div class="about__text">
         <p class="eyebrow">03 — About</p>
         <h2 class="section-title" id="about-title">The Story</h2>
-      </header>
-      <div class="about">
-        <div class="about__portrait">
-          <img src="/images/portrait.jpg" alt="TiMO ODV" width="1200" height="1500" loading="lazy">
-        </div>
-        <div class="about__text" set:html={bio.replace(/\n\n/g, '</p><p>').replace(/^# .+\n/, '')} />
+        <div class="about__body"><Bio /></div>
+        <dl class="about__facts">
+          <div><dt>Based</dt><dd>Cape Town</dd></div>
+          <div><dt>From</dt><dd>Kempton Park</dd></div>
+        </dl>
       </div>
     </div>
   </section>
@@ -119,56 +154,88 @@ import bio from '../content/bio.md?raw';
     <div class="container">
       <header class="section-head">
         <p class="eyebrow">04 — Visuals</p>
-        <h2 class="section-title" id="visuals-title">Gallery</h2>
+        <h2 class="section-title" id="visuals-title">Visuals</h2>
       </header>
+      <!-- Replace the placeholders with 1600×900 photos in public/img/gallery/ -->
       <ul class="gallery">
         <li class="gallery__item gallery__item--wide"><img src="/img/gallery-placeholder.svg" alt="" width="1600" height="900" loading="lazy"></li>
         <li class="gallery__item"><img src="/img/gallery-placeholder.svg" alt="" width="1600" height="900" loading="lazy"></li>
         <li class="gallery__item"><img src="/img/gallery-placeholder.svg" alt="" width="1600" height="900" loading="lazy"></li>
         <li class="gallery__item"><img src="/img/gallery-placeholder.svg" alt="" width="1600" height="900" loading="lazy"></li>
         <li class="gallery__item"><img src="/img/gallery-placeholder.svg" alt="" width="1600" height="900" loading="lazy"></li>
+        <li class="gallery__item"><img src="/img/gallery-placeholder.svg" alt="" width="1600" height="900" loading="lazy"></li>
       </ul>
     </div>
   </section>
 
-  <!-- LISTEN BAND -->
-  <section class="listen-band" id="listen">
-    <div class="container listen-band__inner">
-      <h2 class="listen-band__title">Listen</h2>
-      <ul class="listen-band__list">
-        <li><a href={links.spotify} target="_blank" rel="noopener noreferrer">Spotify</a></li>
-        <li><a href={links.appleMusic} target="_blank" rel="noopener noreferrer">Apple Music</a></li>
-        <li><a href={links.youtube} target="_blank" rel="noopener noreferrer">YouTube</a></li>
+  <!-- LISTEN / FOLLOW -->
+  <section class="section section--listen" id="listen" aria-labelledby="listen-title">
+    <div class="container">
+      <h2 class="visually-hidden" id="listen-title">Listen and follow</h2>
+      <ul class="platforms">
+        <li><a href={links.spotify} rel="me noopener noreferrer" target="_blank">Spotify</a></li>
+        <li><a href={links.appleMusic} rel="me noopener noreferrer" target="_blank">Apple Music</a></li>
+        <li><a href={links.youtube} rel="me noopener noreferrer" target="_blank">YouTube</a></li>
+        <li><a href={links.instagram} rel="me noopener noreferrer" target="_blank">Instagram</a></li>
       </ul>
     </div>
   </section>
 
   <!-- BOOKINGS -->
   <section class="section section--contact" id="contact" aria-labelledby="contact-title">
-    <div class="container">
-      <header class="section-head">
-        <p class="eyebrow">05 — Bookings</p>
+    <div class="container contact">
+      <div class="contact__intro">
+        <p class="eyebrow">05 — Contact</p>
         <h2 class="section-title" id="contact-title">Bookings</h2>
-      </header>
-      <form class="form" action="/api/booking" method="POST" data-booking-form>
+        <p>For club nights, festivals and private events, send the details below and the team will come back to you.</p>
+        <dl class="contact__lines">
+          <div><dt>Bookings</dt><dd><a href={`mailto:${site.bookingEmail}`}>{site.bookingEmail}</a></dd></div>
+        </dl>
+      </div>
+
+      <form class="form" action="/api/booking" method="post" novalidate data-booking-form>
         <div class="form__row">
-          <label class="form__label" for="name">Name</label>
-          <input class="form__input" id="name" name="name" type="text" required maxlength="100">
+          <div class="field">
+            <label for="f-name">Name</label>
+            <input id="f-name" name="name" type="text" autocomplete="name" required maxlength="100">
+          </div>
+          <div class="field">
+            <label for="f-email">Email</label>
+            <input id="f-email" name="email" type="email" autocomplete="email" required maxlength="200">
+          </div>
         </div>
         <div class="form__row">
-          <label class="form__label" for="email">Email</label>
-          <input class="form__input" id="email" name="email" type="email" required maxlength="200">
+          <div class="field">
+            <label for="f-org">Organisation / promoter</label>
+            <input id="f-org" name="organisation" type="text" autocomplete="organization" maxlength="120">
+          </div>
+          <div class="field">
+            <label for="f-date">Event date</label>
+            <input id="f-date" name="event_date" type="date">
+          </div>
         </div>
-        <div class="form__row">
-          <label class="form__label" for="message">Message</label>
-          <textarea class="form__input" id="message" name="message" required maxlength="1000" rows="5"></textarea>
+        <div class="field">
+          <label for="f-venue">Venue &amp; city</label>
+          <input id="f-venue" name="venue" type="text" maxlength="160">
         </div>
-        <input class="honeypot" type="text" name="website" tabindex="-1" autocomplete="off">
-        <div data-turnstile-slot></div>
-        <button class="btn" type="submit">Send enquiry</button>
-        <p class="form__status" data-form-status role="status"></p>
-        <p class="form__or">Or email <a href="mailto:bookings@timoodv.com">bookings@timoodv.com</a></p>
+        <div class="field">
+          <label for="f-msg">Message</label>
+          <textarea id="f-msg" name="message" rows="5" required maxlength="1000"></textarea>
+        </div>
+        <div class="field field--hp" aria-hidden="true">
+          <label for="f-website">Website</label>
+          <input id="f-website" name="website" type="text" tabindex="-1" autocomplete="off">
+        </div>
+        <div class="form__turnstile" data-turnstile-slot>
+          {turnstileKey && <div class="cf-turnstile" data-sitekey={turnstileKey} data-theme="dark"></div>}
+        </div>
+        <p class="form__privacy">We only use these details to respond to your enquiry. See our <a href="/privacy">Privacy Policy</a>.</p>
+        <button class="btn btn--solid" type="submit">Send enquiry
+          <svg class="icon icon--arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12h16m-6-6 6 6-6 6"/></svg>
+        </button>
+        <p class="form__status" role="status" aria-live="polite" data-form-status></p>
       </form>
     </div>
   </section>
+  {turnstileKey && <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>}
 </Layout>
