@@ -1,0 +1,33 @@
+---
+import Layout from '../layouts/Layout.astro';
+import legal from '../content/legal.json';
+const { title, heading, toc = [] } = Astro.props;
+const updated = new Date(legal.updated + 'T12:00:00Z').toLocaleDateString('en-ZA', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
+---
+<Layout title={title}>
+  <section class="legal">
+    <div class="container">
+      <header class="legal__head">
+        <p class="eyebrow">Legal</p>
+        <h1>{heading}</h1>
+        <p class="legal__meta">Last updated {updated}</p>
+      </header>
+      <div class="legal__layout">
+        <nav class="legal__toc" aria-label="On this page">
+          <p class="legal__toc-title">On this page</p>
+          <ol>
+            {toc.map((t) => <li><a href={`#${t.id}`}>{t.label}</a></li>)}
+          </ol>
+          <ul class="legal__other">
+            <li><a href="/privacy">Privacy Policy</a></li>
+            <li><a href="/terms">Terms of Use</a></li>
+            <li><a href="/cookies">Cookie Policy</a></li>
+          </ul>
+        </nav>
+        <article class="legal__body">
+          <slot />
+        </article>
+      </div>
+    </div>
+  </section>
+</Layout>
