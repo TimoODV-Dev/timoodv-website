@@ -2,8 +2,6 @@ name = "timoodv-website"
 compatibility_date = "2026-11-19"
 pages_build_output_dir = "dist"
 
-# Worker cron is deployed separately (see workers/cron.ts)
-# Bindings and secrets are set on the Worker project, not here.
-
-[vars]
-YOUTUBE_CHANNEL_ID = "UCV1ckjwqnLIKirneS3-nOkg"
+# Booking Worker is a separate Pages Function or Worker.
+# Secrets to set in Cloudflare dashboard:
+# TURNSTILE_SECRET, BOOKING_TO_EMAIL (bookings@timoodv.com)
