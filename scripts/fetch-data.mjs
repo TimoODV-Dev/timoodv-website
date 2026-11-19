@@ -3,7 +3,7 @@
 //   2. Latest releases         -> src/content/releases.auto.json (+ public/img/releases/*.jpg)
 //      Source order: Spotify (needs SPOTIFY_CLIENT_ID + SPOTIFY_CLIENT_SECRET) -> Apple Music/iTunes (no key).
 //   3. Gallery from Instagram -> src/content/gallery.json (+ public/img/gallery/*.jpg)
-//      Needs INSTAGRAM_ACCESS_TOKEN (Instagram API with Instagram Login, professional account). Otherwise placeholders stay.
+//      Needs INSTAGRAM_ACCESS_TOKEN (Instagram API, system-user token from Meta Unified login; never put it in the repo). Otherwise placeholders stay.
 // Nothing here may break the build: every step is wrapped, and the previous/default files are kept on failure.
 // Images are downloaded and served from our own domain, so the strict CSP (img-src 'self') still holds.
 import { writeFile, readFile, mkdir } from 'node:fs/promises';
@@ -25,7 +25,7 @@ const log = (...a) => console.log('[fetch-data]', ...a);
 const safeId = (s) => /^[A-Za-z0-9_-]{11}$/.test(s || '');
 const getJson = async (url, opts = {}) => {
   const r = await fetch(url, { ...opts, headers: { 'User-Agent': UA, ...(opts.headers || {}) }, signal: AbortSignal.timeout(15000) });
-  if (!r.ok) throw new Error(`${r.status} ${url}`);
+  if (!r.ok) throw new Error(`${r.status} ${String(url).split('?')[0]}`);
   return r.json();
 };
 const getText = async (url) => {
@@ -155,13 +155,21 @@ export function mapInstagram(items) {
 async function instagramGallery() {
   const token = env.INSTAGRAM_ACCESS_TOKEN;
   if (!token) throw new Error('no INSTAGRAM_ACCESS_TOKEN');
-  // Keep the 60-day token alive (only works once the token is >24h old; harmless otherwise).
-  try {
-    const r = await getJson(`https://graph.instagram.com/refresh_access_token?grant_type=ig_refresh_token&access_token=${encodeURIComponent(token)}`);
-    if (r.access_token && r.access_token !== token) log('WARNING: Instagram returned a different token; update INSTAGRAM_ACCESS_TOKEN');
-    else log('instagram token refreshed, expires_in', r.expires_in);
-  } catch (e) { log('instagram token refresh skipped:', e.message); }
-  const data = await getJson(`https://graph.instagram.com/me/media?fields=id,media_type,media_url,permalink,timestamp,caption&limit=40&access_token=${encodeURIComponent(token)}`);
+  // Token goes in a header, never the URL, so it can't leak into build logs via error messages.
+  const headers = { Authorization: `Bearer ${token}` };
+  const fields = 'id,media_type,media_url,permalink,timestamp,caption';
+  const igId = String(env.INSTAGRAM_USER_ID || '17841401089795120').replace(/\D/g, '');
+  // Unified-login (system-user) tokens may work on either host; try both, keep the first that answers.
+  const endpoints = [
+    `https://graph.instagram.com/v21.0/me/media?fields=${fields}&limit=40`,
+    `https://graph.facebook.com/v21.0/${igId}/media?fields=${fields}&limit=40`,
+  ];
+  let data = null;
+  for (const url of endpoints) {
+    try { data = await getJson(url, { headers }); break; }
+    catch (e) { log('instagram endpoint failed:', e.message.replace(/\?.*$/, '')); }
+  }
+  if (!data) throw new Error('instagram: no endpoint accepted the token');
   const picks = mapInstagram(data.data);
   const out = [];
   for (const [i, m] of picks.entries()) {
