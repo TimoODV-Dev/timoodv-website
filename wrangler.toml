@@ -1,11 +1,20 @@
 name = "timoodv-website"
 compatibility_date = "2026-11-19"
 pages_build_output_dir = "dist"
+main = "workers/cron.ts"
+
+[triggers]
+crons = ["0 */6 * * *"]  # every 6 hours
+
+[[d1_databases]]
+binding = "DB"
+database_name = "timoodv-site"
+database_id = "REPLACE_AFTER_CREATE"
+
+[[kv_namespaces]]
+binding = "CACHE"
+id = "REPLACE_AFTER_CREATE"
 
 [vars]
-# public config only
-
-# Secrets (set via wrangler secret put):
-# YOUTUBE_API_KEY
-# CALENDAR_ICAL_URL
-# TURNSTILE_SECRET
+# public only
+YOUTUBE_CHANNEL_ID = "UC_placeholder"  # set real ID later
