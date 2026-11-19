@@ -235,25 +235,12 @@ const turnstileKey = /^[0-9A-Za-z_-]{10,60}$/.test(rawKey) ? rawKey : '';
   <!-- LISTEN / FOLLOW -->
   <section class="section section--listen" id="listen" aria-labelledby="listen-title">
     <div class="container">
-      <header class="listen__head">
-        <p class="eyebrow eyebrow--light">Listen &amp; follow</p>
-        <h2 class="section-title" id="listen-title">Find TiMO ODV everywhere</h2>
-      </header>
+      <h2 class="visually-hidden" id="listen-title">Listen and follow</h2>
       <ul class="platforms">
-        {[
-          { id: 'spotify', name: 'Spotify', cta: 'Stream the music', url: links.spotify },
-          { id: 'applemusic', name: 'Apple Music', cta: 'Listen on Apple Music', url: links.appleMusic },
-          { id: 'youtube', name: 'YouTube', cta: 'Watch the videos', url: links.youtube },
-          { id: 'instagram', name: 'Instagram', cta: 'Follow for updates', url: links.instagram },
-        ].filter((p) => /^https:\/\//.test(p.url || '')).map((p) => (
-          <li>
-            <a class="platform" href={p.url} rel="me noopener noreferrer" target="_blank">
-              <svg class="platform__icon" aria-hidden="true"><use href={`#i-${p.id}`}></use></svg>
-              <span class="platform__text"><span class="platform__name">{p.name}</span><span class="platform__cta">{p.cta}</span></span>
-              <svg class="icon platform__arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12h16m-6-6 6 6-6 6"/></svg>
-            </a>
-          </li>
-        ))}
+        <li><a href={links.spotify} rel="me noopener noreferrer" target="_blank">Spotify</a></li>
+        <li><a href={links.appleMusic} rel="me noopener noreferrer" target="_blank">Apple Music</a></li>
+        <li><a href={links.youtube} rel="me noopener noreferrer" target="_blank">YouTube</a></li>
+        <li><a href={links.instagram} rel="me noopener noreferrer" target="_blank">Instagram</a></li>
       </ul>
     </div>
   </section>
