@@ -1,10 +1,10 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import legal from '../content/legal.json';
-const { title, heading, toc = [] } = Astro.props;
+const { title, heading, toc = [], description = '', path = '/' } = Astro.props;
 const updated = new Date(legal.updated + 'T12:00:00Z').toLocaleDateString('en-ZA', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
 ---
-<Layout title={title}>
+<Layout title={title} description={description} path={path}>
   <section class="legal">
     <div class="container">
       <header class="legal__head">

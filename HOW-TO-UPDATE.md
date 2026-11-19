@@ -49,3 +49,7 @@ If a lookup fails, the previous content stays. The build never breaks because of
 Privacy, Terms and Cookie pages read their details from `src/content/legal.json` (who is responsible, contact email, last-updated date, how long enquiries are kept). Set `contactEmail` once he has a real address on a domain he owns. Update `updated` whenever the wording or what the site collects changes. If you add analytics, a newsletter, a new embed or any other service that handles visitor data, the Privacy and Cookie pages must be updated first.
 
 Do not edit anything outside `src/content/` unless you know what you are doing.
+
+
+## Accolades (About section)
+Edit `src/content/accolades.json`. Each entry has `badge` (e.g. "Gold", "Platinum", "SAMA"), `year`, `title` and `detail`. Only add certifications and awards that can be verified (RiSA certificate, award body listing, or an official press release). New entries show automatically after the next deploy.

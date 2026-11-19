@@ -1,5 +1,16 @@
 ---
-const { title = "TIMO ODV — DJ / Producer" } = Astro.props;
+const SITE = (Astro.site?.origin || 'https://timoodv.com');
+const {
+  title = "TiMO ODV | DJ, Producer & Songwriter from Johannesburg",
+  description = "TiMO ODV is a Johannesburg DJ, producer and songwriter behind the Gold-certified single “Save Me”. Event details, music, videos and bookings.",
+  path = "/",
+  jsonLd = null,
+  noindex = false,
+} = Astro.props;
+const canonical = SITE + (path === '/' ? '/' : path.replace(/\/?$/, ''));
+const ogImage = SITE + '/img/og-image.jpg';
+// JSON-LD is data (never executed). "<" is escaped so the block can never be closed early.
+const jsonLdText = jsonLd ? JSON.stringify(jsonLd).replace(/</g, '\\u003c') : '';
 import links from '../content/links.json';
 import egg from '../content/easter-egg.json';
 // Only plain /video/<name>.mp4|webm paths are accepted.
@@ -13,12 +24,25 @@ const buildId = Date.now().toString(36);
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{title}</title>
-  <meta name="description" content="TIMO ODV — Johannesburg DJ and producer. Event details, latest releases and bookings.">
+  <meta name="description" content={description}>
+  <link rel="canonical" href={canonical}>
+  {noindex ? <meta name="robots" content="noindex,follow"> : <meta name="robots" content="index,follow,max-image-preview:large">}
   <meta name="theme-color" content="#07080b">
-  <meta property="og:title" content="TIMO ODV — DJ / Producer">
-  <meta property="og:description" content="Event details, latest releases and bookings.">
+  <meta property="og:site_name" content="TiMO ODV">
+  <meta property="og:locale" content="en_ZA">
   <meta property="og:type" content="website">
-  <meta property="og:image" content="/img/og-image.jpg">
+  <meta property="og:url" content={canonical}>
+  <meta property="og:title" content={title}>
+  <meta property="og:description" content={description}>
+  <meta property="og:image" content={ogImage}>
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="TiMO ODV, DJ and producer from Johannesburg">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content={title}>
+  <meta name="twitter:description" content={description}>
+  <meta name="twitter:image" content={ogImage}>
+  {jsonLdText && <script type="application/ld+json" set:html={jsonLdText}></script>}
   <link rel="icon" href="/favicon.ico" sizes="any">
   <link rel="icon" href="/img/favicon-48.png" sizes="48x48" type="image/png">
   <link rel="apple-touch-icon" href="/img/apple-touch-icon.png">
