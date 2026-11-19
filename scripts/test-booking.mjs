@@ -38,6 +38,9 @@ reset(); r = await send(base, env, { Origin: 'https://evil.test' }); assert.equa
 reset(); r = await send(base, env, { 'Content-Length': '999999' }); assert.equal(r.status, 413);
 reset(); r = await send({ ...base, name: 'Ann\r\nBcc: victim@x.test', email: 'ann@example.com' }); assert.equal(r.status, 200);
 assert.ok(!/[\r\n]/.test(mail().subject), 'no header injection via subject'); assert.ok(!/\r/.test(mail().text.split('\n')[0]));
+reset(); r = await send(base, { ...env, BOOKING_TO_EMAIL: 'bookings@timoodv.com, adrien@ce-mgmt.com;BOOKINGS@timoodv.com ,not-an-email' }); assert.equal(r.status, 200);
+assert.deepEqual(mail().to, ['bookings@timoodv.com', 'adrien@ce-mgmt.com'], 'both recipients, de-duplicated, invalid dropped');
+reset(); r = await send(base, { ...env, BOOKING_TO_EMAIL: 'not-an-email' }); assert.equal(r.status, 503, 'no valid recipient: never fake success');
 reset(); r = await send({ ...base, message: 'x'.repeat(5000) }); assert.equal(r.status, 200); assert.ok(mail().text.length < 1400, 'message capped');
 reset(); const bodyLeak = await (await send({ ...base, 'cf-turnstile-response': '' })).text(); assert.ok(!/secret|key/i.test(bodyLeak));
 globalThis.fetch = realFetch;
