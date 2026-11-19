@@ -2,6 +2,8 @@
 //   1. Latest YouTube upload   -> src/content/latest-video.json  (+ public/img/latest-video.jpg)
 //   2. Latest releases         -> src/content/releases.auto.json (+ public/img/releases/*.jpg)
 //      Source order: Spotify (needs SPOTIFY_CLIENT_ID + SPOTIFY_CLIENT_SECRET) -> Apple Music/iTunes (no key).
+//   4. Live stats (YouTube channel views/subscribers via the YouTube Data API, Instagram followers) -> src/content/stats.auto.json
+//      Needs YOUTUBE_API_KEY (a read-only key restricted to the YouTube Data API). Spotify/Apple totals are typed by hand in stats.manual.json.
 //   3. Gallery from Instagram -> src/content/gallery.json (+ public/img/gallery/*.jpg)
 //      Needs INSTAGRAM_ACCESS_TOKEN (Instagram API, system-user token from Meta Unified login; never put it in the repo). Otherwise placeholders stay.
 // Nothing here may break the build: every step is wrapped, and the previous/default files are kept on failure.
@@ -187,6 +189,38 @@ async function instagramGallery() {
   return out.length === GALLERY_COUNT ? out : null; // fewer than 6 usable photos -> keep placeholders
 }
 
+// ---------- live stats ----------
+const wholeNumber = (v) => { const n = Number(v); return Number.isFinite(n) && n >= 0 && n < 1e12 ? Math.floor(n) : null; };
+export const mapYoutubeStats = (j) => {
+  const st = j?.items?.[0]?.statistics;
+  if (!st) return null;
+  const views = wholeNumber(st.viewCount), subscribers = st.hiddenSubscriberCount ? null : wholeNumber(st.subscriberCount);
+  return views === null ? null : { views, subscribers };
+};
+export const mapInstagramProfile = (j) => { const f = wholeNumber(j?.followers_count); return f === null ? null : { followers: f }; };
+async function liveStats() {
+  const target = path.join(CONTENT, 'stats.auto.json');
+  let prev = {}; try { prev = JSON.parse(await readFile(target, 'utf8')) || {}; } catch {}
+  const out = { ...prev };
+  const today = new Date().toISOString().slice(0, 10);
+  if (env.YOUTUBE_API_KEY) {
+    try {
+      const channel = await resolveChannelId();
+      // The key goes in a header, never the URL, so it cannot appear in build logs.
+      const j = await getJson(`https://www.googleapis.com/youtube/v3/channels?part=statistics&id=${encodeURIComponent(channel)}`, { headers: { 'x-goog-api-key': env.YOUTUBE_API_KEY } });
+      const y = mapYoutubeStats(j); if (y) out.youtube = { ...y, updated: today };
+    } catch (e) { log('youtube stats failed, keeping previous:', e.message); }
+  } else log('no YOUTUBE_API_KEY; skipping YouTube stats');
+  if (env.INSTAGRAM_ACCESS_TOKEN) {
+    try {
+      const igId = String(env.INSTAGRAM_USER_ID || '17841401089795120').replace(/\D/g, '');
+      const j = await getJson(`https://graph.facebook.com/v21.0/${igId}?fields=followers_count`, { headers: { Authorization: `Bearer ${env.INSTAGRAM_ACCESS_TOKEN}` } });
+      const i = mapInstagramProfile(j); if (i) out.instagram = { ...i, updated: today };
+    } catch (e) { log('instagram followers failed, keeping previous:', e.message.replace(/\?.*$/, '')); }
+  }
+  return Object.keys(out).length ? out : null;
+}
+
 // ---------- run ----------
 async function step(name, file, fn, fallback) {
   const target = path.join(CONTENT, file);
@@ -202,4 +236,5 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   await step('latest video', 'latest-video.json', latestVideo, { id: site.featuredVideoId || '', title: '', published: '', thumb: '' });
   await step('releases', 'releases.auto.json', latestReleases, []);
   await step('instagram gallery', 'gallery.json', instagramGallery, []);
+  await step('live stats', 'stats.auto.json', liveStats, {});
 }

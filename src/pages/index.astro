@@ -9,6 +9,8 @@ import { cleanShows } from '../../scripts/shows.mjs';
 import video from '../content/latest-video.json';
 import gallery from '../content/gallery.json';
 import accoladesRaw from '../content/accolades.json';
+import statsAuto from '../content/stats.auto.json';
+import statsManual from '../content/stats.manual.json';
 import { Content as Bio } from '../content/bio.md';
 
 // Latest releases come from Spotify / Apple Music at build time; releases.json is a manual fallback.
@@ -32,6 +34,17 @@ const t = (v: unknown, n: number) => String(v ?? '').replace(/[<>]/g, '').trim()
 const accolades = (Array.isArray(accoladesRaw) ? accoladesRaw : [])
   .map((a: any) => ({ badge: t(a.badge, 14), year: /^\d{4}$/.test(String(a.year)) ? String(a.year) : '', title: t(a.title, 80), detail: t(a.detail, 220) }))
   .filter((a) => a.title).slice(0, 12);
+// "By the numbers": YouTube/Instagram update themselves each night; Spotify/Apple totals are typed in by hand (stats.manual.json).
+const whole = (v: unknown) => { const n = Number(v); return Number.isFinite(n) && n > 0 && n < 1e12 ? Math.floor(n) : 0; };
+const short = (n: number) => n >= 1e6 ? `${Math.floor(n / 1e5) / 10}M+`.replace('.0M', 'M') : n >= 1e3 ? `${Math.floor(n / 100) / 10}K+`.replace('.0K', 'K') : String(n);
+const sa: any = statsAuto || {}, sm: any = statsManual || {};
+const monthLabel = (iso: string) => /^\d{4}-\d{2}(-\d{2})?$/.test(iso || '') ? new Date(iso.slice(0, 7) + '-15T12:00:00Z').toLocaleDateString('en-ZA', { month: 'long', year: 'numeric', timeZone: 'UTC' }) : '';
+const statTiles = [
+  { n: whole(sm.spotifyStreams), label: 'Spotify streams', as: monthLabel(sm.asOf) },
+  { n: whole(sm.appleMusicStreams), label: 'Apple Music streams', as: monthLabel(sm.asOf) },
+  { n: whole(sa.youtube?.views), label: 'YouTube views', as: monthLabel(sa.youtube?.updated) },
+  { n: whole(sa.instagram?.followers), label: 'Instagram followers', as: monthLabel(sa.instagram?.updated) },
+].filter((t) => t.n > 0).map((t) => ({ ...t, value: short(t.n) }));
 const sameAs = [links.instagram, links.youtube, links.spotify, links.appleMusic].filter((u) => /^https:\/\//.test(u || ''));
 const jsonLd = {
   '@context': 'https://schema.org',
@@ -198,6 +211,13 @@ const turnstileKey = /^[0-9A-Za-z_-]{10,60}$/.test(rawKey) ? rawKey : '';
     {accolades.length > 0 && (
     <div class="container accolades" aria-labelledby="accolades-title">
       <h3 class="accolades__title" id="accolades-title">Accolades</h3>
+      {statTiles.length > 0 && (
+        <ul class="stats" aria-label="By the numbers">
+          {statTiles.map((t) => (
+            <li class="stat"><p class="stat__value">{t.value}</p><p class="stat__label">{t.label}</p>{t.as && <p class="stat__as">as of {t.as}</p>}</li>
+          ))}
+        </ul>
+      )}
       <ul class="accolades__list">
         {accolades.map((a) => (
           <li class="accolade">

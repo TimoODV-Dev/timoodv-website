@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { parseFeed, mapSpotify, mapItunes, mapInstagram } from './fetch-data.mjs';
+import { parseFeed, mapSpotify, mapItunes, mapInstagram, mapYoutubeStats, mapInstagramProfile } from './fetch-data.mjs';
 
 const feed = `<feed><entry><id>yt:video:abcDEF12345</id><yt:videoId>abcDEF12345</yt:videoId><title>New Track &amp; Video (Official)</title><published>2026-11-01T10:00:00+00:00</published></entry>
 <entry><yt:videoId>zzzzzzzzzzz</yt:videoId><title>Older</title><published>2026-01-01T10:00:00+00:00</published></entry>
@@ -31,4 +31,9 @@ const ig = mapInstagram([
 assert.equal(ig.length, 3); assert.equal(ig[0].mediaUrl, 'https://cdn.example/b.jpg'); assert.equal(ig[0].url, ''); assert.equal(ig[0].alt, 'Photo of TiMO ODV');
 assert.equal(ig[1].mediaUrl, 'https://cdn.example/v-cover.jpg');
 assert.equal(ig[2].alt, 'Cape Town last night thank you!'); assert.equal(ig[2].url, 'https://www.instagram.com/p/AAA/');
+// live stats mappers: only plain non-negative whole numbers are accepted
+assert.deepEqual(mapYoutubeStats({ items: [{ statistics: { viewCount: '21345678', subscriberCount: '12000' } }] }), { views: 21345678, subscribers: 12000 });
+assert.deepEqual(mapYoutubeStats({ items: [{ statistics: { viewCount: '5', hiddenSubscriberCount: true, subscriberCount: '0' } }] }), { views: 5, subscribers: null });
+assert.equal(mapYoutubeStats({ items: [] }), null); assert.equal(mapYoutubeStats({ items: [{ statistics: { viewCount: '<script>' } }] }), null); assert.equal(mapYoutubeStats({ items: [{ statistics: { viewCount: '-4' } }] }), null);
+assert.deepEqual(mapInstagramProfile({ followers_count: 5432 }), { followers: 5432 }); assert.equal(mapInstagramProfile({ followers_count: 'x' }), null); assert.equal(mapInstagramProfile({}), null);
 console.log('fetch-data parsers: all tests passed');
