@@ -50,7 +50,7 @@ const base = (port, over = {}) => ({ host: 'mail.example.com', port: 465, user: 
 const headersOf = (raw) => raw.slice(0, raw.indexOf('\r\n\r\n'));
 const dec64 = (x) => Buffer.from(x.replace(/\r\n/g, ''), 'base64').toString('utf8');
 const partsOf = (raw) => {
-  const m = headersOf(raw).match(/boundary="([^"]+)"/); const rest = raw.slice(raw.indexOf('\r\n\r\n') + 4);
+  const m = raw.match(/boundary="(=_tmo_[^"]+)"/); const rest = m ? raw.slice(raw.indexOf('--' + m[1])) : raw.slice(raw.indexOf('\r\n\r\n') + 4);
   if (!m) return { text: dec64(rest) };
   const out = {}; for (const sg of rest.split('--' + m[1]).slice(1, -1)) { const t = /Content-Type: text\/(plain|html)/.exec(sg)[1]; out[t === 'plain' ? 'text' : 'html'] = dec64(sg.slice(sg.indexOf('\r\n\r\n') + 4)); }
   return out;
@@ -103,23 +103,22 @@ const m = buildMessage(base(1), new Date('2026-11-19T10:00:00Z'), 'abc'); assert
 const realFetch = globalThis.fetch; globalThis.fetch = async () => new Response(JSON.stringify({ success: true, hostname: 'timoodv.test' }));
 const env = (port, over = {}) => ({ TURNSTILE_SECRET: 't', SMTP_HOST: 'mail.example.com', SMTP_PORT: '465', SMTP_USER: 'website@timoodv.com', SMTP_PASS: 'secret-pass', BOOKING_FROM_EMAIL: 'website@timoodv.com', BOOKING_TO_EMAIL: 'bookings@timoodv.com,adrien@ce-mgmt.com', ...over });
 const post = (handler, e, extra = {}) => { const fd = new FormData(); fd.set('name', 'Ann'); fd.set('email', 'ann@example.com'); fd.set('message', 'Hello'); fd.set('cf-turnstile-response', 'tok'); for (const [k, v] of Object.entries(extra)) fd.set(k, v); return handler({ request: new Request('https://timoodv.test/api/booking', { method: 'POST', body: fd }), env: e }); };
-s = await fakeServer(); let res = await post(makeHandler(connectTo(s.port, { n: 0 })), env(s.port)); assert.equal(res.status, 200); assert.equal(s.log.filter((l) => l.startsWith('RCPT')).length, 2); assert.match(headersOf(s.state.data), /Subject: Booking enquiry from Ann/); s.close();
+s = await fakeServer(); let res = await post(makeHandler(connectTo(s.port, { n: 0 })), env(s.port)); assert.equal(res.status, 200); assert.equal(s.log.filter((l) => l.startsWith('RCPT')).length, 3, 'two team inboxes + the sender copy'); assert.match(headersOf(s.messages[0]), /Subject: Booking enquiry from Ann/); s.close();
 s = await fakeServer({ goodPass: 'other' }); const errs = []; const ce = console.error; console.error = (...a) => errs.push(a.join(' '));
 res = await post(makeHandler(connectTo(s.port, { n: 0 })), env(s.port)); console.error = ce; assert.equal(res.status, 502); const txt = await res.text(); assert.ok(!txt.includes('secret-pass') && !errs.join().includes('secret-pass') && !errs.join().includes('Hello'), 'no secrets or message in output'); s.close();
 res = await post(makeHandler(connectTo(1, { n: 0 })), env(1, { SMTP_PASS: undefined })); assert.equal(res.status, 503, 'SMTP half-configured: closed, not faked');
 // 11. reference number + optional copy for the sender
-s = await fakeServer(); res = await post(makeHandler(connectTo(s.port, { n: 0 })), env(s.port), { send_copy: '1' }); let j = await res.json();
+s = await fakeServer(); res = await post(makeHandler(connectTo(s.port, { n: 0 })), env(s.port)); let j = await res.json();
 assert.equal(res.status, 200); assert.match(j.ref, /^TMO-[A-HJ-KM-NP-Z2-9]{6}$/); assert.equal(j.copy, true); assert.equal(s.messages.length, 2);
 assert.match(headersOf(s.messages[0]), new RegExp(`Subject: Booking enquiry from Ann \\[${j.ref}\\]`)); assert.match(headersOf(s.messages[0]), /To: <bookings@timoodv.com>, <adrien@ce-mgmt.com>/);
 assert.match(headersOf(s.messages[1]), /^From: "TiMO ODV website" <website@timoodv.com>/); assert.match(headersOf(s.messages[1]), /To: <ann@example.com>\r\n/); assert.ok(!/adrien|Bcc/i.test(headersOf(s.messages[1])), 'copy goes only to the sender');
 assert.match(headersOf(s.messages[1]), new RegExp(`Subject: Your enquiry to TiMO ODV \\[${j.ref}\\]`)); assert.match(headersOf(s.messages[1]), /Reply-To: <bookings@timoodv.com>/);
 assert.match(bodyOf(s.messages[1]), new RegExp(`Reference: ${j.ref}`)); assert.match(bodyOf(s.messages[1]), /Name: Ann/); assert.match(bodyOf(s.messages[0]), new RegExp(`Reference: ${j.ref}`)); s.close();
-s = await fakeServer(); res = await post(makeHandler(connectTo(s.port, { n: 0 })), env(s.port)); j = await res.json(); assert.equal(j.copy, false); assert.equal(s.messages.length, 1, 'no copy unless asked'); assert.ok(j.ref); s.close();
-s = await fakeServer({ rejectRcpt: ['ann@'] }); res = await post(makeHandler(connectTo(s.port, { n: 0 })), env(s.port), { send_copy: '1' }); j = await res.json();
+s = await fakeServer({ rejectRcpt: ['ann@'] }); res = await post(makeHandler(connectTo(s.port, { n: 0 })), env(s.port)); j = await res.json();
 assert.equal(res.status, 200, 'a failed copy never fails the enquiry'); assert.equal(j.copy, false); assert.equal(s.messages.length, 1); s.close();
 // styled HTML version rides along as multipart/alternative; hostile names stay escaped
-s = await fakeServer(); res = await post(makeHandler(connectTo(s.port, { n: 0 })), env(s.port), { send_copy: '1', name: '<script>alert(1)</script> Ann' }); j = await res.json();
-for (const raw of s.messages) { const p = partsOf(raw); assert.match(headersOf(raw), /Content-Type: multipart\/alternative; boundary="=_tmo_[0-9a-f]{32}"/); assert.ok(p.text && p.html, 'both parts present'); assert.ok(p.html.includes(j.ref)); assert.ok(!p.html.includes('<script>'), 'name escaped in html'); assert.ok(p.html.includes('&lt;script&gt;')); }
+s = await fakeServer(); res = await post(makeHandler(connectTo(s.port, { n: 0 })), env(s.port), { name: '<script>alert(1)</script> Ann' }); j = await res.json();
+for (const raw of s.messages) { const p = partsOf(raw); assert.match(headersOf(raw), /Content-Type: multipart\/related; boundary="=_rel_[0-9a-f]{32}"/); assert.match(raw, /Content-ID: <timo-logo>/); assert.match(p.html, /src="cid:timo-logo"/); assert.ok(/Content-Type: image\/png/.test(raw)); assert.ok(p.text && p.html, 'both parts present'); assert.ok(p.html.includes(j.ref)); assert.ok(!p.html.includes('<script>'), 'name escaped in html'); assert.ok(p.html.includes('&lt;script&gt;')); }
 assert.ok(!partsOf(s.messages[0]).html.includes('onerror')); s.close();
 s = await fakeServer(); res = await post(makeHandler(connectTo(s.port, { n: 0 })), env(s.port), { email: 'a"b@example.com' }); assert.equal(res.status, 400, 'quote in address refused'); s.close();
 const refs = new Set(); for (let i = 0; i < 20; i++) { s = await fakeServer(); refs.add((await (await post(makeHandler(connectTo(s.port, { n: 0 })), env(s.port))).json()).ref); s.close(); } assert.ok(refs.size > 15, 'references are random');

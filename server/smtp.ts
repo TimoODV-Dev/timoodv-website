@@ -26,6 +26,7 @@ export interface SmtpOptions {
   replyTo?: string;
   subject: string;
   text: string;
+  inline?: { cid: string; type: string; base64: string }; // optional inline image referenced as cid: from the HTML
   html?: string; // optional styled version; sent as multipart/alternative with the plain text
   timeoutMs?: number;
 }
@@ -81,11 +82,16 @@ export function buildMessage(o: SmtpOptions, now = new Date(), id = crypto.rando
   const part = (type: string, content: string) =>
     `Content-Type: ${type}; charset=utf-8\r\nContent-Transfer-Encoding: base64\r\n\r\n${wrap76(b64text(crlf(content)))}\r\n`;
   if (o.html) {
-    // multipart/alternative: clients show the HTML part, or fall back to the plain text. Both are base64, so no content can
-    // look like a MIME boundary or an SMTP command.
-    const boundary = "=_tmo_" + id.replace(/-/g, "");
-    return headers.join("\r\n") + `\r\nContent-Type: multipart/alternative; boundary="${boundary}"\r\n\r\n` +
-      `--${boundary}\r\n${part("text/plain", o.text)}--${boundary}\r\n${part("text/html", o.html)}--${boundary}--\r\n`;
+    // multipart/alternative: clients show the HTML part, or fall back to the plain text. Everything is base64, so no
+    // content can look like a MIME boundary or an SMTP command.
+    const alt = "=_tmo_" + id.replace(/-/g, "");
+    const altBody = `--${alt}\r\n${part("text/plain", o.text)}--${alt}\r\n${part("text/html", o.html)}--${alt}--\r\n`;
+    if (!o.inline) return headers.join("\r\n") + `\r\nContent-Type: multipart/alternative; boundary="${alt}"\r\n\r\n` + altBody;
+    const rel = "=_rel_" + id.replace(/-/g, "");
+    const cid = o.inline.cid.replace(/[^A-Za-z0-9._-]/g, "");
+    const img = `Content-Type: ${o.inline.type.replace(/[^a-z/]/g, "")}\r\nContent-Transfer-Encoding: base64\r\nContent-ID: <${cid}>\r\nContent-Disposition: inline; filename="logo.png"\r\n\r\n${wrap76(o.inline.base64)}\r\n`;
+    return headers.join("\r\n") + `\r\nContent-Type: multipart/related; boundary="${rel}"\r\n\r\n` +
+      `--${rel}\r\nContent-Type: multipart/alternative; boundary="${alt}"\r\n\r\n${altBody}\r\n--${rel}\r\n${img}--${rel}--\r\n`;
   }
   return headers.join("\r\n") + "\r\n" + part("text/plain", o.text);
 }

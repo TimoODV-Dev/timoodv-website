@@ -166,11 +166,8 @@
         }
         let info = {}; try { info = await res.json(); } catch {}
         const sentTo = (form.querySelector('[name="email"]') || {}).value || 'the email address you gave';
-        const wantedCopy = !!(form.querySelector('[name="send_copy"]') || {}).checked;
         form.reset();
-        const note = wantedCopy
-          ? (info.copy ? `A copy is on its way to ${sentTo}. If you don't see it, check your spam folder. We will reply to that address.` : `We could not email you a copy, so please keep the reference below. We will reply to ${sentTo}.`)
-          : `We will reply to ${sentTo}.`;
+        const note = (info.copy ? `A copy is on its way to ${sentTo}. If you don't see it, check your spam folder. We will reply to that address.` : `We could not email you a copy, so please keep the reference below. We will reply to ${sentTo}.`);
         setStatus(note, 'is-ok', 'Enquiry sent', info.ref);
       } catch (err) {
         const known = err && err.message && err.message !== 'bad status' && !/Failed to fetch|NetworkError|Load failed/i.test(err.message);

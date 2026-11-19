@@ -12,6 +12,7 @@
 //   RATE_LIMIT         (optional) KV namespace binding
 
 import { sendSmtp, cloudflareConnect, type Connect } from "../../server/smtp.ts";
+import { LOGO_CID, LOGO_PNG_BASE64 } from "../../server/logo.ts";
 import { enquiryEmail, copyEmail } from "../../server/emails.ts";
 
 interface Env {
@@ -109,7 +110,6 @@ export const makeHandler = (connect: Connect) => async ({ request, env }: { requ
   // Short reference the visitor sees on screen and in both emails, so an enquiry is easy to find later.
   const ALPHABET = "23456789ABCDEFGHJKMNPQRSTUVWXYZ"; // no 0/O/1/I/L
   const ref = "TMO-" + Array.from(crypto.getRandomValues(new Uint8Array(6)), (n) => ALPHABET[n % ALPHABET.length]).join("");
-  const sendCopy = clean(form.get("send_copy"), 5) === "1";
 
   const enquiry = { ref, name, email, organisation, eventDate, venue, message };
   const mail = enquiryEmail(enquiry);
@@ -118,13 +118,13 @@ export const makeHandler = (connect: Connect) => async ({ request, env }: { requ
   const deliver = async (rcpt: string[], subject: string, body: { text: string; html: string }, replyTo: string) => {
     if (useSmtp) {
       const port = parseInt(env.SMTP_PORT || "465", 10);
-      await sendSmtp({ host: env.SMTP_HOST!, port: port === 587 ? 587 : 465, user: env.SMTP_USER!, pass: env.SMTP_PASS!, from: env.BOOKING_FROM_EMAIL!, fromName: "TiMO ODV website", to: rcpt, replyTo, subject, text: body.text, html: body.html }, connect);
+      await sendSmtp({ host: env.SMTP_HOST!, port: port === 587 ? 587 : 465, user: env.SMTP_USER!, pass: env.SMTP_PASS!, from: env.BOOKING_FROM_EMAIL!, fromName: "TiMO ODV website", to: rcpt, replyTo, subject, text: body.text, html: body.html, inline: { cid: LOGO_CID, type: "image/png", base64: LOGO_PNG_BASE64 } }, connect);
       return;
     }
     const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: { Authorization: `Bearer ${env.RESEND_API_KEY}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ from: `TiMO ODV website <${env.BOOKING_FROM_EMAIL}>`, to: rcpt, reply_to: replyTo, subject, text: body.text, html: body.html }),
+      body: JSON.stringify({ from: `TiMO ODV website <${env.BOOKING_FROM_EMAIL}>`, to: rcpt, reply_to: replyTo, subject, text: body.text, html: body.html, attachments: [{ filename: "logo.png", content: LOGO_PNG_BASE64, content_id: LOGO_CID }] }),
     });
     if (!res.ok) throw new Error(`provider ${res.status}`);
   };
@@ -137,9 +137,9 @@ export const makeHandler = (connect: Connect) => async ({ request, env }: { requ
     return json({ error: "Could not send. Please try again or email us directly." }, 502);
   }
 
-  // Optional copy for the sender. A failure here never fails the enquiry, which has already been delivered.
+  // Every sender gets a copy for their records. A failure here never fails the enquiry, which has already been delivered.
   let copy = false;
-  if (sendCopy) {
+  {
     try {
       await deliver([email], `Your enquiry to TiMO ODV [${ref}]`, copyEmail(enquiry), to[0]);
       copy = true;

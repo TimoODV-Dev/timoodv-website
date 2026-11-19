@@ -3,6 +3,8 @@
 // from visitor input is a mailto: whose address was validated and is URL-encoded. No scripts, no remote images,
 // no remote CSS (nothing is fetched when the email is opened, so it cannot track the reader).
 
+import { LOGO_CID, LOGO_W, LOGO_H } from "./logo.ts";
+
 export interface Enquiry {
   ref: string;
   name: string;
@@ -47,7 +49,7 @@ const shell = (preheader: string, title: string, body: string, footer: string) =
 <div style="display:none;max-height:0;overflow:hidden;opacity:0;color:#eceef1;">${esc(preheader)}</div>
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#eceef1;"><tr><td align="center" style="padding:28px 12px;">
 <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="width:100%;max-width:600px;background:#ffffff;border-radius:6px;overflow:hidden;">
-<tr><td style="background:#07080b;padding:26px 32px 22px;border-bottom:4px solid ${RED};"><span style="font:28px/1 ${DISPLAY};letter-spacing:1px;color:#ffffff;text-transform:uppercase;">TiMO ODV</span><br><span style="font:11px ${FONT};letter-spacing:2.4px;text-transform:uppercase;color:#9aa0ab;">DJ &nbsp;/&nbsp; Producer</span></td></tr>
+<tr><td style="background:#07080b;padding:26px 32px 22px;border-bottom:4px solid ${RED};"><img src="cid:${LOGO_CID}" width="${Math.round(LOGO_W / 2.4)}" height="${Math.round(LOGO_H / 2.4)}" alt="TiMO ODV" style="display:block;border:0;width:${Math.round(LOGO_W / 2.4)}px;height:auto;font:700 24px ${FONT};color:#ffffff;"></td></tr>
 <tr><td style="padding:34px 32px 30px;">${body}</td></tr>
 <tr><td style="padding:20px 32px 28px;border-top:1px solid ${LINE};background:#fafafb;font:12px/1.6 ${FONT};color:${MUTED};">${footer}</td></tr>
 </table></td></tr></table></body></html>`;
