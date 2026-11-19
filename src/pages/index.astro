@@ -9,16 +9,14 @@ import releases from '../content/releases.json';
     <h1>TIMO<br>ODV</h1>
     <div class="subtitle">South African DJ / Producer</div>
     <div class="genre">Melodic House · Indie Dance</div>
-    <div class="cta-row">
-      <a href="#releases" class="cta">Latest Releases →</a>
-    </div>
+    <a href="#releases" class="cta">Latest Releases →</a>
   </section>
 
-  <section id="releases">
+  <section class="releases" id="releases">
     <h2>Releases</h2>
-    <ul style="list-style:none;padding:0">
+    <ul>
       {releases.map(r => (
-        <li style="padding:1.4rem 0;border-bottom:1px solid #222;display:flex;justify-content:space-between">
+        <li>
           <strong>{r.title}</strong>
           <span>{r.date}</span>
         </li>
@@ -33,12 +31,12 @@ import releases from '../content/releases.json';
 
   <section id="booking">
     <h2>Booking</h2>
-    <form action="/api/booking" method="POST" style="max-width:26rem;display:flex;flex-direction:column;gap:.8rem">
-      <input name="name" required placeholder="Name" style="padding:.9rem;background:#111;border:1px solid #333;color:#fff" />
-      <input name="email" type="email" required placeholder="Email" style="padding:.9rem;background:#111;border:1px solid #333;color:#fff" />
-      <textarea name="message" required placeholder="Event details" rows="4" style="padding:.9rem;background:#111;border:1px solid #333;color:#fff"></textarea>
-      <input name="website" class="honeypot" tabindex="-1" style="position:absolute;left:-9999px" />
-      <button class="cta" type="submit">Send enquiry</button>
+    <form action="/api/booking" method="POST" style="max-width:28rem;display:flex;flex-direction:column;gap:0.9rem">
+      <input name="name" required placeholder="Name" style="padding:1rem;background:#0a0a0a;border:1px solid #333;color:#fff;font:inherit" />
+      <input name="email" type="email" required placeholder="Email" style="padding:1rem;background:#0a0a0a;border:1px solid #333;color:#fff;font:inherit" />
+      <textarea name="message" required placeholder="Event details" rows="5" style="padding:1rem;background:#0a0a0a;border:1px solid #333;color:#fff;font:inherit"></textarea>
+      <input name="website" class="honeypot" tabindex="-1" autocomplete="off" style="position:absolute;left:-9999px" />
+      <button type="submit" class="cta" style="align-self:flex-start;border:none;background:transparent;cursor:pointer">Send enquiry</button>
     </form>
   </section>
 </Layout>
