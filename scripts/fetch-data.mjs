@@ -146,12 +146,14 @@ async function latestReleases() {
 // ---------- Instagram gallery ----------
 const GALLERY_COUNT = 6;
 export function mapInstagram(items) {
+  // Photos use media_url; videos/reels use their cover image (thumbnail_url).
+  const imageOf = (m) => (m.media_type === 'VIDEO' ? m.thumbnail_url : m.media_url);
   return (items || [])
-    .filter((m) => m && (m.media_type === 'IMAGE' || m.media_type === 'CAROUSEL_ALBUM') && m.media_url && /^https:\/\//.test(m.media_url))
+    .filter((m) => m && ['IMAGE', 'CAROUSEL_ALBUM', 'VIDEO'].includes(m.media_type) && /^https:\/\//.test(imageOf(m) || ''))
     .sort((a, b) => String(b.timestamp).localeCompare(String(a.timestamp)))
     .slice(0, GALLERY_COUNT)
     .map((m) => ({
-      mediaUrl: m.media_url,
+      mediaUrl: imageOf(m),
       url: /^https:\/\/(www\.)?instagram\.com\//.test(m.permalink || '') ? m.permalink : '',
       alt: ((m.caption || '').replace(/[#@]\S+/g, '').replace(/\s+/g, ' ').trim().slice(0, 110)) || 'Photo of TiMO ODV',
     }));
@@ -161,12 +163,12 @@ async function instagramGallery() {
   if (!token) throw new Error('no INSTAGRAM_ACCESS_TOKEN');
   // Token goes in a header, never the URL, so it can't leak into build logs via error messages.
   const headers = { Authorization: `Bearer ${token}` };
-  const fields = 'id,media_type,media_url,permalink,timestamp,caption';
+  const fields = 'id,media_type,media_url,thumbnail_url,permalink,timestamp,caption';
   const igId = String(env.INSTAGRAM_USER_ID || '17841401089795120').replace(/\D/g, '');
   // Unified-login (system-user) tokens may work on either host; try both, keep the first that answers.
   const endpoints = [
-    `https://graph.instagram.com/v21.0/me/media?fields=${fields}&limit=40`,
     `https://graph.facebook.com/v21.0/${igId}/media?fields=${fields}&limit=40`,
+    `https://graph.instagram.com/v21.0/me/media?fields=${fields}&limit=40`,
   ];
   let data = null;
   for (const url of endpoints) {
