@@ -1,7 +1,5 @@
-// Scheduled ingestion Worker for calendar + YouTube
-// Secrets required:
-//   CALENDAR_ICAL_URL  (Google Calendar secret iCal address)
-//   YOUTUBE_API_KEY    (YouTube Data API v3 key)
+// Scheduled ingestion Worker — pending approval flow
+// Secrets: CALENDAR_ICAL_URL, YOUTUBE_API_KEY
 
 interface Env {
   DB: D1Database;
@@ -23,15 +21,13 @@ async function runIngestion(env: Env) {
     ingestYouTube(env),
   ]);
 
-  const summary = results.map((r, i) => ({
-    task: i === 0 ? "calendar" : "youtube",
-    status: r.status,
-    reason: r.status === "rejected" ? String(r.reason) : "ok",
-  }));
-
   await env.CACHE.put("ingestion:last-run", JSON.stringify({
     at: new Date().toISOString(),
-    summary,
+    summary: results.map((r, i) => ({
+      task: i === 0 ? "calendar" : "youtube",
+      status: r.status,
+      reason: r.status === "rejected" ? String(r.reason) : "ok",
+    })),
   }));
 }
 
@@ -40,44 +36,31 @@ async function ingestCalendar(env: Env) {
 
   const res = await fetch(env.CALENDAR_ICAL_URL, {
     headers: { "User-Agent": "TiMO-ODV-Site/1.0" },
-    cf: { cacheTtl: 0 },
   });
-  if (!res.ok) throw new Error(`iCal fetch ${res.status}`);
+  if (!res.ok) throw new Error(`iCal ${res.status}`);
 
   const text = await res.text();
-  const events = parseICal(text);
+  const rawEvents = parseICal(text);
 
-  // last-good cache
-  await env.CACHE.put("cache:events", JSON.stringify(events), { expirationTtl: 60 * 60 * 24 * 7 });
+  // Strip sensitive fields and mark as pending
+  const pending = rawEvents.map((e) => ({
+    id: e.id,
+    title: e.title,
+    start: e.start,
+    end: e.end,
+    venue: e.venue,
+    status: "pending",
+    fetched_at: new Date().toISOString(),
+  }));
 
-  // optional D1 snapshot (schema must exist)
-  try {
-    for (const e of events.slice(0, 50)) {
-      await env.DB.prepare(
-        `INSERT OR REPLACE INTO events (id, title, start_iso, end_iso, venue, city, ticket_url, raw_json, fetched_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
-      ).bind(
-        e.id,
-        e.title,
-        e.start,
-        e.end || null,
-        e.venue || null,
-        e.city || null,
-        e.ticket_url || null,
-        JSON.stringify(e),
-        new Date().toISOString()
-      ).run();
-    }
-  } catch (err) {
-    // D1 may not be ready yet; cache is still good
-    console.error("D1 calendar write skipped", err);
-  }
+  await env.CACHE.put("pending:events", JSON.stringify(pending), { expirationTtl: 60 * 60 * 24 * 14 });
+
+  const approved = await env.CACHE.get("approved:events", "json") || [];
+  await env.CACHE.put("cache:events", JSON.stringify(approved));
 }
 
 async function ingestYouTube(env: Env) {
-  if (!env.YOUTUBE_API_KEY || !env.YOUTUBE_CHANNEL_ID) {
-    throw new Error("YouTube secrets missing");
-  }
+  if (!env.YOUTUBE_API_KEY || !env.YOUTUBE_CHANNEL_ID) return;
 
   const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${encodeURIComponent(env.YOUTUBE_CHANNEL_ID)}&order=date&maxResults=10&type=video&key=${env.YOUTUBE_API_KEY}`;
   const res = await fetch(url);
@@ -88,13 +71,11 @@ async function ingestYouTube(env: Env) {
     id: item.id.videoId,
     title: item.snippet.title,
     published: item.snippet.publishedAt,
-    thumbnail: item.snippet.thumbnails?.medium?.url,
   }));
 
   await env.CACHE.put("cache:youtube", JSON.stringify(videos), { expirationTtl: 60 * 60 * 24 * 7 });
 }
 
-// Minimal safe iCal parser (VEVENT only)
 function parseICal(text: string) {
   const events: any[] = [];
   const blocks = text.split("BEGIN:VEVENT").slice(1);
@@ -115,7 +96,6 @@ function parseICal(text: string) {
       start: start.length === 8 ? `${start.slice(0,4)}-${start.slice(4,6)}-${start.slice(6,8)}` : start,
       end: get("DTEND") || null,
       venue: get("LOCATION") || null,
-      ticket_url: null,
     });
   }
   return events.slice(0, 30);
