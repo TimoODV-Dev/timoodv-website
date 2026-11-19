@@ -25,7 +25,11 @@ const log = (...a) => console.log('[fetch-data]', ...a);
 const safeId = (s) => /^[A-Za-z0-9_-]{11}$/.test(s || '');
 const getJson = async (url, opts = {}) => {
   const r = await fetch(url, { ...opts, headers: { 'User-Agent': UA, ...(opts.headers || {}) }, signal: AbortSignal.timeout(15000) });
-  if (!r.ok) throw new Error(`${r.status} ${String(url).split('?')[0]}`);
+  if (!r.ok) {
+    let detail = '';
+    try { const j = await r.json(); detail = j?.error?.message || j?.error_message || ''; } catch {}
+    throw new Error(`${r.status} ${String(url).split('?')[0]} ${String(detail).replace(/[A-Za-z0-9_\-]{40,}/g, '[redacted]').slice(0, 200)}`.trim());
+  }
   return r.json();
 };
 const getText = async (url) => {
@@ -177,6 +181,7 @@ async function instagramGallery() {
     await download(m.mediaUrl, path.join(IMG, file), 5000); // any failure aborts: never publish a half-broken gallery
     out.push({ src: `/img/${file}`, alt: m.alt, url: m.url });
   }
+  if (out.length < GALLERY_COUNT) log(`instagram: only ${picks.length} usable photos of ${(data.data || []).length} items returned (need ${GALLERY_COUNT}); keeping placeholders`);
   return out.length === GALLERY_COUNT ? out : null; // fewer than 6 usable photos -> keep placeholders
 }
 
