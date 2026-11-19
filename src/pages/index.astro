@@ -4,7 +4,8 @@ import links from '../content/links.json';
 import site from '../content/site.json';
 import manualReleases from '../content/releases.json';
 import autoReleases from '../content/releases.auto.json';
-import shows from '../content/shows.json';
+import rawShows from '../content/shows.json';
+import { cleanShows } from '../../scripts/shows.mjs';
 import video from '../content/latest-video.json';
 import gallery from '../content/gallery.json';
 import { Content as Bio } from '../content/bio.md';
@@ -24,6 +25,9 @@ const platformLinks = (r: { title: string; url?: string }) => {
 const videoTitle = video.title || 'Latest video';
 const videoId = /^[A-Za-z0-9_-]{11}$/.test(video.id || '') ? video.id : '';
 const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+// Invalid entries are dropped here (and fail `npm test`), so a bad edit can never reach the page.
+const { shows, problems: showProblems } = cleanShows(rawShows);
+if (showProblems.length) console.warn('[shows] ignored:', showProblems.join('; '));
 const upcoming = shows
   .filter((s) => s.date && new Date(s.date + 'T23:59:59+02:00') >= new Date())
   .sort((a, b) => a.date.localeCompare(b.date));
@@ -247,7 +251,7 @@ const turnstileKey = import.meta.env.PUBLIC_TURNSTILE_SITEKEY || '';
           <input id="f-website" name="website" type="text" tabindex="-1" autocomplete="off">
         </div>
         <div class="form__turnstile" data-turnstile-slot>
-          {turnstileKey && <div class="cf-turnstile" data-sitekey={turnstileKey} data-theme="dark"></div>}
+          {turnstileKey && <div data-turnstile-widget data-sitekey={turnstileKey}></div>}
         </div>
         <p class="form__privacy">We only use these details to respond to your enquiry. See our <a href="/privacy">Privacy Policy</a>.</p>
         <button class="btn btn--solid" type="submit">Send enquiry
@@ -257,5 +261,4 @@ const turnstileKey = import.meta.env.PUBLIC_TURNSTILE_SITEKEY || '';
       </form>
     </div>
   </section>
-  {turnstileKey && <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>}
 </Layout>

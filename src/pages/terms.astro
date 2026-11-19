@@ -1,9 +1,49 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import legal from '../content/legal.json';
+const updated = new Date(legal.updated + 'T12:00:00Z').toLocaleDateString('en-ZA', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
 ---
-<Layout title="Terms — TiMO ODV">
+<Layout title="Terms of Use — TiMO ODV">
   <section class="legal"><div class="container">
     <h1>Terms of Use</h1>
-      <p>Content on this site is for personal, non-commercial use. All music and imagery remain the property of TiMO ODV or their respective rights holders.</p>
+    <p class="legal__meta">Last updated {updated}</p>
+
+    <p>By using this website you agree to these terms. If you do not agree, please do not use the site. The site is operated by <strong>{legal.responsibleParty}</strong>, {legal.country} ("TiMO ODV", "we", "us").</p>
+
+    <h2>What this site is</h2>
+    <p>This is the official website of the DJ, producer and songwriter TiMO ODV. It shares music, event details and booking information. It does not sell anything, and it is not a ticketing or streaming service.</p>
+
+    <h2>Our content</h2>
+    <p>The music, recordings, artwork, logos, photographs, videos, animations and text on this site belong to TiMO ODV or to the people and companies who licensed them to us. You may view the site and share links to it. You may not copy, reproduce, distribute or use our content commercially, or present it as your own, without written permission. Release artwork, streaming links and embedded videos belong to their respective labels and platforms.</p>
+
+    <h2>Booking enquiries</h2>
+    <p>Sending the contact form is an enquiry only. It is not an offer, a booking or a contract. A booking exists only once both sides have agreed the terms in writing. Event dates and details on this site may change, and you should check with the venue or ticket seller before you travel.</p>
+
+    <h2>Fair use</h2>
+    <p>Please do not misuse the site. In particular, do not:</p>
+    <ul>
+      <li>use the contact form to send spam, advertising, abuse, or anything unlawful;</li>
+      <li>try to disrupt, overload, probe or break into the site or its services, or bypass its security, including the human-verification check;</li>
+      <li>use automated tools to collect content from the site, or to send enquiries.</li>
+    </ul>
+    <p>We may block access to anyone who does.</p>
+
+    <h2>Third-party links and content</h2>
+    <p>The site links to and embeds services such as Spotify, Apple Music, YouTube, YouTube Music and Instagram. We do not control them and are not responsible for their content, availability or privacy practices. Their own terms apply when you use them.</p>
+
+    <h2>No guarantees</h2>
+    <p>We take care to keep the site accurate and available, but we provide it "as is". We do not promise that it will always be up, error-free or free of harmful components. To the extent the law allows, we are not liable for any loss or damage arising from your use of, or inability to use, the site or its links. Nothing in these terms limits any right you have that cannot lawfully be limited, including under the Consumer Protection Act 68 of 2008.</p>
+
+    <h2>Privacy</h2>
+    <p>How we handle personal information is explained in our <a href="/privacy">Privacy Policy</a> and <a href="/cookies">Cookie Policy</a>.</p>
+
+    <h2>Changes</h2>
+    <p>We may change these terms or the site at any time. The date above shows when the terms last changed. Continuing to use the site after a change means you accept the new terms.</p>
+
+    <h2>Governing law</h2>
+    <p>These terms are governed by the laws of the Republic of South Africa, and the South African courts have jurisdiction over any dispute about them.</p>
+
+    <h2>Contact</h2>
+    <p>{legal.contactEmail ? <>Email <a href={`mailto:${legal.contactEmail}`}>{legal.contactEmail}</a> or use</> : <>Use</>} the <a href="/#contact">contact form</a>.</p>
   </div></section>
 </Layout>
