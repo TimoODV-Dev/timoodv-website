@@ -192,15 +192,18 @@ async function instagramGallery() {
 // ---------- record cover art (for the certified-records plaques) ----------
 const normTitle = (t) => String(t || '').toLowerCase().replace(/\s*-\s*(single|ep)$/i, '').replace(/\s*[\(\[].*?[\)\]]/g, '').replace(/[^a-z0-9]+/g, ' ').trim();
 // Picks the earliest release whose title is, or starts with, the record's title; returns a 600px cover URL or ''.
-export function matchRecordArt(albums, title) {
+export function matchRecord(albums, title) {
   const want = normTitle(title);
-  if (!want) return '';
+  if (!want) return null;
   const hit = (albums || [])
     .filter((r) => r.wrapperType === 'collection' && r.collectionName && /^https:\/\//.test(r.artworkUrl100 || ''))
     .filter((r) => { const n = normTitle(r.collectionName); return n === want || n.startsWith(want + ' '); })
     .sort((a, b) => String(a.releaseDate).localeCompare(String(b.releaseDate)))[0];
-  return hit ? hit.artworkUrl100.replace(/\/\d+x\d+bb\./, '/600x600bb.') : '';
+  if (!hit) return null;
+  const year = /^\d{4}/.test(hit.releaseDate || '') ? hit.releaseDate.slice(0, 4) : '';
+  return { src: hit.artworkUrl100.replace(/\/\d+x\d+bb\./, '/600x600bb.'), year };
 }
+export const matchRecordArt = (albums, title) => matchRecord(albums, title)?.src || '';
 async function recordArt() {
   const records = JSON.parse(await readFile(path.join(CONTENT, 'records.json'), 'utf8')).records || [];
   const id = (links.appleMusic.match(/artist\/[^/]+\/(\d+)/) || links.appleMusic.match(/(\d{6,})/) || [])[1];
@@ -208,10 +211,10 @@ async function recordArt() {
   const target = path.join(CONTENT, 'records.art.json');
   let out = {}; try { out = JSON.parse(await readFile(target, 'utf8')) || {}; } catch {}
   for (const r of records) {
-    const src = matchRecordArt(data.results || [], r.title);
-    if (!src) { log('record art: no match for', r.title); continue; }
+    const m = matchRecord(data.results || [], r.title);
+    if (!m) { log('record art: no match for', r.title); continue; }
     const file = `records/${slug(r.title)}.jpg`;
-    try { await download(src, path.join(IMG, file)); out[slug(r.title)] = `/img/${file}`; } catch (e) { log('record art failed', r.title, e.message); }
+    try { await download(m.src, path.join(IMG, file)); out[slug(r.title)] = { cover: `/img/${file}`, year: m.year }; } catch (e) { log('record art failed', r.title, e.message); }
   }
   return out;
 }

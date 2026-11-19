@@ -54,8 +54,9 @@ const slugOf = (x: string) => x.toLowerCase().replace(/[^a-z0-9]+/g, '-').replac
 const records = (Array.isArray(rawRecords.records) ? rawRecords.records : []).slice(0, 12).map((r: any) => {
   const title = t(r.title, 60);
   const level = LEVELS.find((l) => l.toLowerCase() === String(r.level || '').trim().toLowerCase()) || '';
-  const art = (recordArt as any)?.[slugOf(title)];
-  return { title, level, tier: level ? level.toLowerCase().replace('multi-', '') : 'certified', year: /^\d{4}$/.test(String(r.year)) ? String(r.year) : '', art: typeof art === 'string' && /^\/img\/records\/[a-z0-9-]+\.jpg$/.test(art) ? art : '' };
+  const meta = (recordArt as any)?.[slugOf(title)] || {};
+  const art = meta.cover;
+  return { title, level, tier: level ? level.toLowerCase().replace('multi-', '') : 'certified', year: [r.year, meta.year].map(String).find((y) => /^\d{4}$/.test(y)) || '', art: typeof art === 'string' && /^\/img\/records\/[a-z0-9-]+\.jpg$/.test(art) ? art : '' };
 }).filter((r: any) => r.title);
 const photoCredit = t(rawRecords.photoCredit, 80);
 const sameAs = [links.instagram, links.youtube, links.spotify, links.appleMusic].filter((u) => /^https:\/\//.test(u || ''));
