@@ -10,9 +10,19 @@ const { title } = Astro.props;
     <link rel="stylesheet" href="/styles/global.css" />
   </head>
   <body>
+    <header>
+      <div class="logo">TiMO ODV</div>
+      <nav>
+        <a href="#releases">Releases</a>
+        <a href="#story">Story</a>
+        <a href="#booking">Booking</a>
+      </nav>
+    </header>
     <slot />
     <footer>
-      <a href="/privacy">Privacy</a> · <a href="/terms">Terms</a> · <a href="/cookies">Cookies</a>
+      <a href="/privacy">Privacy</a>
+      <a href="/terms">Terms</a>
+      <a href="/cookies">Cookies</a>
     </footer>
   </body>
 </html>
