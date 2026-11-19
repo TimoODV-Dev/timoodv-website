@@ -1,0 +1,11 @@
+name = "timoodv-website"
+compatibility_date = "2026-11-19"
+pages_build_output_dir = "dist"
+
+[vars]
+# public config only
+
+# Secrets (set via wrangler secret put):
+# YOUTUBE_API_KEY
+# CALENDAR_ICAL_URL
+# TURNSTILE_SECRET

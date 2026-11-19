@@ -1,0 +1,63 @@
+---
+import Layout from '../layouts/Layout.astro';
+import bio from '../content/bio.md?raw';
+import site from '../content/site.json';
+import releases from '../content/releases.json';
+
+const featured = site.featuredVideoId;
+---
+
+<Layout title="TiMO ODV">
+  <section class="hero">
+    <h1>TiMO ODV</h1>
+    <p>Melodic House & Indie Dance</p>
+    {featured && (
+      <div class="video-facade" data-id={featured}>
+        <button class="play">Play latest clip</button>
+      </div>
+    )}
+  </section>
+
+  <section class="releases">
+    <h2>Latest Releases</h2>
+    <ul>
+      {releases.map((r) => (
+        <li>
+          <strong>{r.title}</strong> — {r.date}
+          {r.youtubeId && <span> · YouTube</span>}
+        </li>
+      ))}
+    </ul>
+  </section>
+
+  <section class="story">
+    <h2>The Story</h2>
+    <div set:html={bio.replace(/\n/g, '<br>')} />
+  </section>
+
+  <section class="booking">
+    <h2>Booking</h2>
+    <form action="/api/booking" method="POST">
+      <input type="text" name="name" required maxlength="100" placeholder="Name" />
+      <input type="email" name="email" required maxlength="200" placeholder="Email" />
+      <textarea name="message" required maxlength="1000" placeholder="Event details"></textarea>
+      <input type="text" name="website" class="honeypot" tabindex="-1" autocomplete="off" />
+      <button type="submit">Send enquiry</button>
+    </form>
+    <p>Or email <a href={`mailto:${site.bookingEmail}`}>{site.bookingEmail}</a></p>
+  </section>
+</Layout>
+
+<style>
+  .hero { min-height: 80vh; display: flex; flex-direction: column; justify-content: center; }
+  .honeypot { position: absolute; left: -9999px; }
+</style>
+
+<script>
+  document.querySelectorAll('.video-facade').forEach((el) => {
+    el.addEventListener('click', () => {
+      const id = el.dataset.id;
+      el.innerHTML = `<iframe src="https://www.youtube-nocookie.com/embed/${id}?autoplay=1" allow="autoplay; encrypted-media" allowfullscreen></iframe>`;
+    });
+  });
+</script>
