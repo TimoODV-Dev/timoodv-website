@@ -109,7 +109,19 @@
     const holder = form.querySelector('[data-turnstile-widget]');
     const sitekey = holder ? holder.dataset.sitekey : '';
     let widgetId = null; let tsState = sitekey ? 'idle' : 'off'; // idle | loading | ready | failed | off
-    const setStatus = (msg, cls) => { status.className = 'form__status' + (cls ? ' ' + cls : ''); status.textContent = msg; };
+    const reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    // A prominent banner: title + message, announced to screen readers, scrolled into view and focused for results.
+    const setStatus = (msg, cls, title, ref) => {
+      status.className = 'form__status' + (cls ? ' ' + cls : '');
+      status.replaceChildren();
+      if (!msg) { status.hidden = true; return; }
+      status.hidden = false;
+      status.setAttribute('role', cls === 'is-error' ? 'alert' : 'status');
+      if (title) { const t = document.createElement('strong'); t.className = 'form__status-title'; t.textContent = title; status.append(t); }
+      const m = document.createElement('span'); m.textContent = msg; status.append(m);
+      if (ref) { status.append(document.createElement('br')); const r = document.createElement('span'); r.textContent = 'Reference: '; const rv = document.createElement('strong'); rv.className = 'ref'; rv.textContent = ref; r.append(rv); status.append(r); }
+      if (cls === 'is-ok' || cls === 'is-error') { status.focus({ preventScroll: true }); status.scrollIntoView({ block: 'center', behavior: reduced ? 'auto' : 'smooth' }); }
+    };
     // The human check (Cloudflare Turnstile) only loads once the visitor reaches the form, so nobody else contacts Cloudflare.
     const loadTurnstile = () => {
       if (tsState !== 'idle') return;
@@ -137,25 +149,29 @@
       form.querySelectorAll('[aria-invalid]').forEach((el) => el.removeAttribute('aria-invalid'));
       if (bad.length) {
         bad.forEach((el) => el.setAttribute('aria-invalid', 'true'));
-        setStatus('Please complete the highlighted fields.', 'is-error'); bad[0].focus(); return;
+        setStatus('Please complete the highlighted fields and send again.', 'is-error', 'Missing details'); bad[0].focus(); return;
       }
       const token = form.querySelector('[name="cf-turnstile-response"]');
       if (tsState !== 'off' && !(token && token.value)) {
-        if (tsState === 'failed') setStatus('The verification check could not load. Please disable any blocker for this site, or try another browser, then reload.', 'is-error');
-        else { loadTurnstile(); setStatus('Please wait for the verification check to finish, then send again.', 'is-error'); }
+        if (tsState === 'failed') setStatus('The verification check could not load. Please disable any blocker for this site, or try another browser, then reload.', 'is-error', 'Message not sent');
+        else { loadTurnstile(); setStatus('Please wait a moment for the verification check to finish, then send again.', 'is-error', 'One moment'); }
         return;
       }
-      setStatus('Sending\u2026'); if (submitBtn) submitBtn.disabled = true;
+      setStatus('Sending your enquiry\u2026', 'is-wait'); if (submitBtn) submitBtn.disabled = true;
       try {
         const res = await fetch(form.action, { method: 'POST', body: new FormData(form), headers: { Accept: 'application/json' }, credentials: 'same-origin' });
         if (!res.ok) {
           let msg = ''; try { msg = (await res.json()).error || ''; } catch {}
           throw new Error(msg || 'bad status');
         }
-        form.reset(); setStatus('Thanks \u2014 your enquiry has been sent. We will reply to the email address you gave.', 'is-ok');
+        let info = {}; try { info = await res.json(); } catch {}
+        const sentTo = (form.querySelector('[name="email"]') || {}).value || 'the email address you gave';
+        form.reset();
+        const note = (info.copy ? `A copy is on its way to ${sentTo}. If you don't see it, check your spam folder. We will reply to that address.` : `We could not email you a copy, so please keep the reference below. We will reply to ${sentTo}.`);
+        setStatus(note, 'is-ok', 'Enquiry sent', info.ref);
       } catch (err) {
         const known = err && err.message && err.message !== 'bad status' && !/Failed to fetch|NetworkError|Load failed/i.test(err.message);
-        setStatus(known ? err.message : 'Something went wrong. Please try again in a moment.', 'is-error');
+        setStatus(known ? err.message : 'Something went wrong. Please try again in a moment, or email us directly.', 'is-error', 'Message not sent');
       } finally {
         if (submitBtn) submitBtn.disabled = false;
         if (window.turnstile && widgetId !== null) { try { window.turnstile.reset(widgetId); } catch {} } // tokens are single-use

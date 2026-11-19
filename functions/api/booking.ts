@@ -12,6 +12,8 @@
 //   RATE_LIMIT         (optional) KV namespace binding
 
 import { sendSmtp, cloudflareConnect, type Connect } from "../../server/smtp.ts";
+import { LOGO_CID, LOGO_PNG_BASE64 } from "../../server/logo.ts";
+import { enquiryEmail, copyEmail } from "../../server/emails.ts";
 
 interface Env {
   SMTP_HOST?: string;
@@ -75,7 +77,7 @@ export const makeHandler = (connect: Connect) => async ({ request, env }: { requ
   const venue = clean(form.get("venue"), 160);
   const message = cleanBlock(form.get("message"), 1000);
 
-  if (!name || !message || !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email) || (eventDate && !/^\d{4}-\d{2}-\d{2}$/.test(eventDate))) {
+  if (!name || !message || !/^[^\s@<>"'`,;:()\[\]\\]+@[^\s@<>"'`,;:()\[\]\\]+\.[^\s@<>"'`,;:()\[\]\\]{2,}$/.test(email) || (eventDate && !/^\d{4}-\d{2}-\d{2}$/.test(eventDate))) {
     return json({ error: "Invalid input" }, 400);
   }
 
@@ -105,42 +107,47 @@ export const makeHandler = (connect: Connect) => async ({ request, env }: { requ
     return json({ error: "Booking form is temporarily unavailable. Please email us directly." }, 503);
   }
 
-  const lines = [`Name: ${name}`, `Email: ${email}`];
-  if (organisation) lines.push(`Organisation: ${organisation}`);
-  if (eventDate) lines.push(`Event date: ${eventDate}`);
-  if (venue) lines.push(`Venue & city: ${venue}`);
-  lines.push("", message);
-  const text = lines.join("\n");
+  // Short reference the visitor sees on screen and in both emails, so an enquiry is easy to find later.
+  const ALPHABET = "23456789ABCDEFGHJKMNPQRSTUVWXYZ"; // no 0/O/1/I/L
+  const ref = "TMO-" + Array.from(crypto.getRandomValues(new Uint8Array(6)), (n) => ALPHABET[n % ALPHABET.length]).join("");
 
-  const subject = `Booking enquiry from ${name}`.slice(0, 150);
-  if (useSmtp) {
-    try {
+  const enquiry = { ref, name, email, organisation, eventDate, venue, message };
+  const mail = enquiryEmail(enquiry);
+
+  // One delivery function for both emails (SMTP preferred, Resend as fallback).
+  const deliver = async (rcpt: string[], subject: string, body: { text: string; html: string }, replyTo: string) => {
+    if (useSmtp) {
       const port = parseInt(env.SMTP_PORT || "465", 10);
-      await sendSmtp({ host: env.SMTP_HOST!, port: port === 587 ? 587 : 465, user: env.SMTP_USER!, pass: env.SMTP_PASS!, from: env.BOOKING_FROM_EMAIL, fromName: "TiMO ODV website", to, replyTo: email, subject, text }, connect);
-    } catch (e) {
-      // Log the reason (never the password or the visitor's message).
-      console.error("booking: smtp error", e instanceof Error ? e.message : "unknown");
-      return json({ error: "Could not send. Please try again or email us directly." }, 502);
+      await sendSmtp({ host: env.SMTP_HOST!, port: port === 587 ? 587 : 465, user: env.SMTP_USER!, pass: env.SMTP_PASS!, from: env.BOOKING_FROM_EMAIL!, fromName: "TiMO ODV website", to: rcpt, replyTo, subject, text: body.text, html: body.html, inline: { cid: LOGO_CID, type: "image/png", base64: LOGO_PNG_BASE64 } }, connect);
+      return;
     }
-    return json({ ok: true });
-  }
+    const res = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${env.RESEND_API_KEY}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ from: `TiMO ODV website <${env.BOOKING_FROM_EMAIL}>`, to: rcpt, reply_to: replyTo, subject, text: body.text, html: body.html, attachments: [{ filename: "logo.png", content: LOGO_PNG_BASE64, content_id: LOGO_CID }] }),
+    });
+    if (!res.ok) throw new Error(`provider ${res.status}`);
+  };
 
-  const res = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: { Authorization: `Bearer ${env.RESEND_API_KEY}`, "Content-Type": "application/json" },
-    body: JSON.stringify({
-      from: `TiMO ODV website <${env.BOOKING_FROM_EMAIL}>`,
-      to,
-      reply_to: email,
-      subject,
-      text,
-    }),
-  });
-  if (!res.ok) {
-    console.error("booking: email provider error", res.status);
+  try {
+    await deliver(to, `Booking enquiry from ${name} [${ref}]`.slice(0, 150), mail, email);
+  } catch (e) {
+    // Log the reason (never the password or the visitor's message).
+    console.error("booking: send failed", e instanceof Error ? e.message : "unknown");
     return json({ error: "Could not send. Please try again or email us directly." }, 502);
   }
-  return json({ ok: true });
+
+  // Every sender gets a copy for their records. A failure here never fails the enquiry, which has already been delivered.
+  let copy = false;
+  {
+    try {
+      await deliver([email], `Your enquiry to TiMO ODV [${ref}]`, copyEmail(enquiry), to[0]);
+      copy = true;
+    } catch (e) {
+      console.error("booking: copy failed", e instanceof Error ? e.message : "unknown");
+    }
+  }
+  return json({ ok: true, ref, copy });
 };
 
 export const onRequestPost: PagesFunction<Env> = (ctx) => makeHandler(cloudflareConnect)(ctx);

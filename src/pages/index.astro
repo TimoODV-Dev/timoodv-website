@@ -259,7 +259,7 @@ const turnstileKey = /^[0-9A-Za-z_-]{10,60}$/.test(rawKey) ? rawKey : '';
         <button class="btn btn--solid" type="submit">Send enquiry
           <svg class="icon icon--arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12h16m-6-6 6 6-6 6"/></svg>
         </button>
-        <p class="form__status" role="status" aria-live="polite" data-form-status></p>
+        <div class="form__status" role="status" aria-live="polite" tabindex="-1" hidden data-form-status></div>
       </form>
     </div>
   </section>
