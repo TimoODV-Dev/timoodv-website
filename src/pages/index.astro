@@ -107,7 +107,7 @@ import bio from '../content/bio.md?raw';
       </header>
       <div class="about">
         <div class="about__portrait">
-          <img src="/img/portrait-placeholder.svg" alt="" width="1200" height="1500" loading="lazy">
+          <img src="/img/portrait.jpg" alt="TiMO ODV" width="1200" height="1500" loading="lazy">
         </div>
         <div class="about__text" set:html={bio.replace(/\n\n/g, '</p><p>').replace(/^# .+\n/, '')} />
       </div>
@@ -167,6 +167,7 @@ import bio from '../content/bio.md?raw';
         <div data-turnstile-slot></div>
         <button class="btn" type="submit">Send enquiry</button>
         <p class="form__status" data-form-status role="status"></p>
+        <p class="form__or">Or email <a href="mailto:bookings@timoodv.com">bookings@timoodv.com</a></p>
       </form>
     </div>
   </section>
