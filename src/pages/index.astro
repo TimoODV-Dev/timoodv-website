@@ -1,42 +1,173 @@
 ---
 import Layout from '../layouts/Layout.astro';
-import bio from '../content/bio.md?raw';
+import links from '../content/links.json';
 import releases from '../content/releases.json';
+import bio from '../content/bio.md?raw';
 ---
 
-<Layout title="TiMO ODV">
-  <section class="hero">
-    <h1>TIMO<br>ODV</h1>
-    <div class="subtitle">South African DJ / Producer</div>
-    <div class="genre">Melodic House · Indie Dance</div>
-    <a href="#releases" class="cta">Latest Releases</a>
+<Layout>
+  <!-- HERO -->
+  <section class="hero" id="top" aria-labelledby="hero-title">
+    <div class="hero__bg" aria-hidden="true">
+      <picture>
+        <source type="image/avif" srcset="/img/hero-1000.avif 1000w, /img/hero-1800.avif 1800w, /img/hero-2576.avif 2576w" sizes="100vw">
+        <source type="image/webp" srcset="/img/hero-1000.webp 1000w, /img/hero-1800.webp 1800w, /img/hero-2576.webp 2576w" sizes="100vw">
+        <img class="hero__photo" src="/img/hero-1800.jpg" srcset="/img/hero-1000.jpg 1000w, /img/hero-1800.jpg 1800w, /img/hero-2576.jpg 2576w" sizes="100vw" width="2576" height="1717" alt="" fetchpriority="high">
+      </picture>
+      <div class="hero__vignette"></div>
+    </div>
+    <div class="hero__content">
+      <h1 class="hero__title" id="hero-title">
+        <img src="/img/logo-white.svg" alt="TIMO ODV" width="1428" height="680">
+      </h1>
+      <p class="hero__role"><span>DJ / Producer</span></p>
+    </div>
+    <div class="hero__footer">
+      <p class="hero__location">
+        <svg class="icon icon--pin" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a7 7 0 0 0-7 7c0 5.2 7 13 7 13s7-7.8 7-13a7 7 0 0 0-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z"/></svg>
+        Cape Town, South Africa
+      </p>
+      <a class="btn btn--outline" href="#dates">View event details
+        <svg class="icon icon--arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12h16m-6-6 6 6-6 6"/></svg>
+      </a>
+    </div>
   </section>
 
-  <section class="releases" id="releases">
-    <h2>Releases</h2>
-    <ul>
-      {releases.map(r => (
-        <li>
-          <strong>{r.title}</strong>
-          <span>{r.date}</span>
+  <!-- MUSIC -->
+  <section class="section section--music" id="music" aria-labelledby="music-title">
+    <div class="container">
+      <header class="section-head">
+        <p class="eyebrow">01 — Music</p>
+        <h2 class="section-title" id="music-title">New Official Clip</h2>
+      </header>
+      <div class="video-facade" data-video-id="VIDEO_ID_HERE" data-video-title="TRACK TITLE (Official Video)">
+        <img class="video-facade__poster" src="/img/video-poster-placeholder.svg" alt="" width="1600" height="900" loading="lazy">
+        <button class="video-facade__play" type="button" aria-label="Play video: TRACK TITLE (Official Video)">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
+        </button>
+        <div class="video-facade__meta">
+          <span class="tag">Official video</span>
+          <h3 class="video-facade__title">Track Title</h3>
+          <p class="video-facade__note">Plays from YouTube. Loading the video shares data with Google.</p>
+        </div>
+      </div>
+      <header class="section-head section-head--row">
+        <h2 class="section-title section-title--sm">Latest Releases</h2>
+        <a class="link-arrow" href="#listen">All platforms
+          <svg class="icon icon--arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12h16m-6-6 6 6-6 6"/></svg>
+        </a>
+      </header>
+      <ul class="release-grid">
+        {releases.map((r) => (
+          <li class="release">
+            <a class="release__link" href={r.url} rel="noopener noreferrer" target="_blank">
+              <span class="release__cover"><img src={r.cover} alt={`Cover art for ${r.title}`} width="1000" height="1000" loading="lazy"></span>
+              <span class="release__type">{r.type} · {r.year}</span>
+              <span class="release__title">{r.title}</span>
+              <span class="release__label">{r.label}</span>
+            </a>
+          </li>
+        ))}
+      </ul>
+    </div>
+  </section>
+
+  <!-- DATES -->
+  <section class="section section--dates" id="dates" aria-labelledby="dates-title">
+    <div class="container">
+      <header class="section-head section-head--row">
+        <div>
+          <p class="eyebrow">02 — Live</p>
+          <h2 class="section-title" id="dates-title">Event Details</h2>
+        </div>
+        <p class="section-aside">All times SAST</p>
+      </header>
+      <ol class="show-list">
+        <li class="show">
+          <time class="show__date" datetime="2026-12-12">
+            <span class="show__day">12</span>
+            <span class="show__month">Dec</span>
+          </time>
+          <div class="show__info">
+            <h3 class="show__venue">PLACEHOLDER Venue Name</h3>
+            <p class="show__city">Cape Town</p>
+          </div>
+          <span class="btn btn--disabled">Sold out</span>
         </li>
-      ))}
-    </ul>
+      </ol>
+    </div>
   </section>
 
-  <section id="story">
-    <h2>The Story</h2>
-    <div set:html={bio.replace(/\n\n/g, '</p><p>')} />
+  <!-- STORY -->
+  <section class="section section--about" id="about" aria-labelledby="about-title">
+    <div class="container">
+      <header class="section-head">
+        <p class="eyebrow">03 — About</p>
+        <h2 class="section-title" id="about-title">The Story</h2>
+      </header>
+      <div class="about">
+        <div class="about__portrait">
+          <img src="/img/portrait-placeholder.svg" alt="" width="1200" height="1500" loading="lazy">
+        </div>
+        <div class="about__text" set:html={bio.replace(/\n\n/g, '</p><p>').replace(/^# .+\n/, '')} />
+      </div>
+    </div>
   </section>
 
-  <section id="booking">
-    <h2>Booking</h2>
-    <form action="/api/booking" method="POST" style="max-width:26rem;display:flex;flex-direction:column;gap:0.75rem">
-      <input name="name" required placeholder="Name" style="padding:0.9rem;background:#111;border:1px solid #333;color:#fff;font:inherit" />
-      <input name="email" type="email" required placeholder="Email" style="padding:0.9rem;background:#111;border:1px solid #333;color:#fff;font:inherit" />
-      <textarea name="message" required placeholder="Event details" rows="4" style="padding:0.9rem;background:#111;border:1px solid #333;color:#fff;font:inherit"></textarea>
-      <input name="website" class="honeypot" tabindex="-1" style="position:absolute;left:-9999px" />
-      <button type="submit" class="cta" style="align-self:flex-start;cursor:pointer">Send enquiry</button>
-    </form>
+  <!-- VISUALS -->
+  <section class="section section--visuals" id="visuals" aria-labelledby="visuals-title">
+    <div class="container">
+      <header class="section-head">
+        <p class="eyebrow">04 — Visuals</p>
+        <h2 class="section-title" id="visuals-title">Gallery</h2>
+      </header>
+      <ul class="gallery">
+        <li class="gallery__item gallery__item--wide"><img src="/img/gallery-placeholder.svg" alt="" width="1600" height="900" loading="lazy"></li>
+        <li class="gallery__item"><img src="/img/gallery-placeholder.svg" alt="" width="1600" height="900" loading="lazy"></li>
+        <li class="gallery__item"><img src="/img/gallery-placeholder.svg" alt="" width="1600" height="900" loading="lazy"></li>
+        <li class="gallery__item"><img src="/img/gallery-placeholder.svg" alt="" width="1600" height="900" loading="lazy"></li>
+        <li class="gallery__item"><img src="/img/gallery-placeholder.svg" alt="" width="1600" height="900" loading="lazy"></li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- LISTEN BAND -->
+  <section class="listen-band" id="listen">
+    <div class="container listen-band__inner">
+      <h2 class="listen-band__title">Listen</h2>
+      <ul class="listen-band__list">
+        <li><a href={links.spotify} target="_blank" rel="noopener noreferrer">Spotify</a></li>
+        <li><a href={links.appleMusic} target="_blank" rel="noopener noreferrer">Apple Music</a></li>
+        <li><a href={links.youtube} target="_blank" rel="noopener noreferrer">YouTube</a></li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- BOOKINGS -->
+  <section class="section section--contact" id="contact" aria-labelledby="contact-title">
+    <div class="container">
+      <header class="section-head">
+        <p class="eyebrow">05 — Bookings</p>
+        <h2 class="section-title" id="contact-title">Bookings</h2>
+      </header>
+      <form class="form" action="/api/booking" method="POST" data-booking-form>
+        <div class="form__row">
+          <label class="form__label" for="name">Name</label>
+          <input class="form__input" id="name" name="name" type="text" required maxlength="100">
+        </div>
+        <div class="form__row">
+          <label class="form__label" for="email">Email</label>
+          <input class="form__input" id="email" name="email" type="email" required maxlength="200">
+        </div>
+        <div class="form__row">
+          <label class="form__label" for="message">Message</label>
+          <textarea class="form__input" id="message" name="message" required maxlength="1000" rows="5"></textarea>
+        </div>
+        <input class="honeypot" type="text" name="website" tabindex="-1" autocomplete="off">
+        <div data-turnstile-slot></div>
+        <button class="btn" type="submit">Send enquiry</button>
+        <p class="form__status" data-form-status role="status"></p>
+      </form>
+    </div>
   </section>
 </Layout>
