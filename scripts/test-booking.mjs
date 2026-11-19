@@ -1,6 +1,6 @@
 // Tests the booking Pages Function with a mocked Turnstile + Resend (no network).
 import assert from 'node:assert/strict';
-import { onRequestPost } from '../functions/api/booking.ts';
+import { onRequestPost, makeHandler } from '../functions/api/booking.ts';
 
 const realFetch = globalThis.fetch;
 let calls = [];
@@ -44,4 +44,9 @@ reset(); r = await send(base, { ...env, BOOKING_TO_EMAIL: 'not-an-email' }); ass
 reset(); r = await send({ ...base, message: 'x'.repeat(5000) }); assert.equal(r.status, 200); assert.ok(mail().text.length < 1400, 'message capped');
 reset(); const bodyLeak = await (await send({ ...base, 'cf-turnstile-response': '' })).text(); assert.ok(!/secret|key/i.test(bodyLeak));
 globalThis.fetch = realFetch;
+// body larger than the limit is refused even without a Content-Length header
+{ const big = new FormData(); big.set('name','A'); big.set('email','a@b.co'); big.set('message','x'.repeat(30000)); big.set('cf-turnstile-response','t');
+  const r = await makeHandler(async () => { throw new Error('no network'); })({ request: new Request('https://timoodv.test/api/booking', { method: 'POST', body: big }), env: { TURNSTILE_SECRET: 's' } }); assert.equal(r.status, 413, 'oversized body refused (chunked)'); assert.equal(r.headers.get('X-Content-Type-Options'), 'nosniff'); }
+// malformed Origin does not crash
+{ const r = await makeHandler(async () => { throw new Error('x'); })({ request: new Request('https://timoodv.test/api/booking', { method: 'POST', headers: { Origin: 'null' }, body: new FormData() }), env: { TURNSTILE_SECRET: 's' } }); assert.equal(r.status, 403); }
 console.log('booking function: all tests passed');
