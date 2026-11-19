@@ -58,7 +58,6 @@ const records = (Array.isArray(rawRecords.records) ? rawRecords.records : []).sl
   const art = meta.cover;
   return { title, level, tier: level ? level.toLowerCase().replace('multi-', '') : 'certified', year: [r.year, meta.year].map(String).find((y) => /^\d{4}$/.test(y)) || '', art: typeof art === 'string' && /^\/img\/records\/[a-z0-9-]+\.jpg$/.test(art) ? art : '' };
 }).filter((r: any) => r.title);
-const photoCredit = t(rawRecords.photoCredit, 80);
 const sameAs = [links.instagram, links.youtube, links.spotify, links.appleMusic].filter((u) => /^https:\/\//.test(u || ''));
 const jsonLd = {
   '@context': 'https://schema.org',
@@ -234,10 +233,9 @@ const turnstileKey = /^[0-9A-Za-z_-]{10,60}$/.test(rawKey) ? rawKey : '';
       )}
       {records.length > 0 && (
         <div class="records">
-          <figure class="records__photo">
-            <img src="/images/record-wall.jpg" alt="TiMO ODV sitting behind a wall of framed gold and platinum record awards" width="1368" height="809" loading="lazy">
-            {photoCredit && <figcaption>Photo: {photoCredit}</figcaption>}
-          </figure>
+          <div class="records__bg" aria-hidden="true">
+            <img src="/images/record-wall.jpg" alt="" width="1368" height="809" loading="lazy">
+          </div>
           <h4 class="records__title">Certified records</h4>
           <ul class="plaques" data-count={records.length}>
             {records.map((r) => (
