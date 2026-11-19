@@ -118,13 +118,13 @@ export const makeHandler = (connect: Connect) => async ({ request, env }: { requ
   const deliver = async (rcpt: string[], subject: string, body: { text: string; html: string }, replyTo: string) => {
     if (useSmtp) {
       const port = parseInt(env.SMTP_PORT || "465", 10);
-      await sendSmtp({ host: env.SMTP_HOST!, port: port === 587 ? 587 : 465, user: env.SMTP_USER!, pass: env.SMTP_PASS!, from: env.BOOKING_FROM_EMAIL!, fromName: "TiMO ODV website", to: rcpt, replyTo, subject, text: body.text, html: body.html, inline: { cid: LOGO_CID, type: "image/png", base64: LOGO_PNG_BASE64 } }, connect);
+      await sendSmtp({ host: env.SMTP_HOST!, port: port === 587 ? 587 : 465, user: env.SMTP_USER!, pass: env.SMTP_PASS!, from: env.BOOKING_FROM_EMAIL!, fromName: "TiMO ODV | Booking", to: rcpt, replyTo, subject, text: body.text, html: body.html, inline: { cid: LOGO_CID, type: "image/png", base64: LOGO_PNG_BASE64 } }, connect);
       return;
     }
     const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: { Authorization: `Bearer ${env.RESEND_API_KEY}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ from: `TiMO ODV website <${env.BOOKING_FROM_EMAIL}>`, to: rcpt, reply_to: replyTo, subject, text: body.text, html: body.html, attachments: [{ filename: "logo.png", content: LOGO_PNG_BASE64, content_id: LOGO_CID }] }),
+      body: JSON.stringify({ from: `TiMO ODV | Booking <${env.BOOKING_FROM_EMAIL}>`, to: rcpt, reply_to: replyTo, subject, text: body.text, html: body.html, attachments: [{ filename: "logo.png", content: LOGO_PNG_BASE64, content_id: LOGO_CID }] }),
     });
     if (!res.ok) throw new Error(`provider ${res.status}`);
   };
@@ -141,7 +141,7 @@ export const makeHandler = (connect: Connect) => async ({ request, env }: { requ
   let copy = false;
   {
     try {
-      await deliver([email], `Your enquiry to TiMO ODV [${ref}]`, copyEmail(enquiry), to[0]);
+      await deliver([email], `Your booking request [${ref}]`, copyEmail(enquiry), to[0]);
       copy = true;
     } catch (e) {
       console.error("booking: copy failed", e instanceof Error ? e.message : "unknown");

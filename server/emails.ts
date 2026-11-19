@@ -82,7 +82,7 @@ export function copyEmail(e: Enquiry): { text: string; html: string } {
     `<h1 style="margin:8px 0 0;font:34px/1.1 ${DISPLAY};letter-spacing:.5px;text-transform:uppercase;color:${INK};font-weight:400;">Thanks, ${esc(e.name.split(" ")[0] || "there")}</h1>` +
     `<p style="margin:14px 0 0;font:16px/1.6 ${FONT};color:${INK};">We have your enquiry and will reply to this email address. Here is a copy for your records.</p>` +
     refChip(e.ref) + `<div style="height:24px;"></div>` + detailsTable(e) + messageBlock(e);
-  const html = shell(`Your enquiry to TiMO ODV (${e.ref})`, "Your enquiry to TiMO ODV", body,
+  const html = shell(`Your booking request (${e.ref})`, "Your booking request", body,
     `You are receiving this because someone used the contact form on the TiMO ODV website with this email address. If that was not you, you can ignore this message and nothing further will be sent.`);
   return { text, html };
 }
