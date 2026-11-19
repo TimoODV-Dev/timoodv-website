@@ -1,20 +1,9 @@
 name = "timoodv-website"
 compatibility_date = "2026-11-19"
 pages_build_output_dir = "dist"
-main = "workers/cron.ts"
 
-[triggers]
-crons = ["0 */6 * * *"]  # every 6 hours
-
-[[d1_databases]]
-binding = "DB"
-database_name = "timoodv-site"
-database_id = "40ef19dc-9443-4022-bf03-847f6560b5ec"
-
-[[kv_namespaces]]
-binding = "CACHE"
-id = "190fe498ea864cc180e4bf4fca8e808c"
+# Worker cron is deployed separately (see workers/cron.ts)
+# Bindings and secrets are set on the Worker project, not here.
 
 [vars]
-# public only
 YOUTUBE_CHANNEL_ID = "UCV1ckjwqnLIKirneS3-nOkg"
