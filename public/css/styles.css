@@ -365,6 +365,21 @@ button { font: inherit; color: inherit; }
 }
 .platforms a:hover { color: var(--bg); }
 
+/* ---------- Accolades (About) ---------- */
+.accolades { margin-top: clamp(3rem, 6vw, 4.5rem); padding-top: clamp(2rem, 4vw, 2.75rem); border-top: 1px solid var(--line); }
+.accolades__title { font-family: var(--font-display); text-transform: uppercase; font-weight: 400; font-size: clamp(1.6rem, 3vw, 2.2rem); margin-bottom: 1.5rem; }
+.accolades__list { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1rem; }
+.accolade { display: flex; gap: 1rem; align-items: flex-start; padding: 1.1rem 1.15rem; background: var(--bg-3); border: 1px solid var(--line); }
+.accolade__badge {
+  flex: none; min-width: 4.2rem; padding: .45rem .6rem; text-align: center; font-family: var(--font-display); text-transform: uppercase;
+  letter-spacing: .06em; font-size: .95rem; line-height: 1; color: var(--bg); background: var(--ink-2);
+}
+.accolade__badge[data-badge="gold"] { background: linear-gradient(135deg, #f2d27a, #c9962b); }
+.accolade__badge[data-badge="platinum"] { background: linear-gradient(135deg, #f3f5f8, #aeb6c2); }
+.accolade__title { font-weight: 600; line-height: 1.3; }
+.accolade__year { color: var(--ink-3); font-weight: 400; }
+.accolade__detail { color: var(--ink-2); font-size: .92rem; margin-top: .3rem; max-width: 52ch; }
+
 /* ---------- Contact ---------- */
 .contact { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: clamp(2.5rem, 6vw, 6rem); }
 .contact__intro > p:not(.eyebrow) { color: var(--ink-2); margin-top: 1.75rem; max-width: 42ch; }
