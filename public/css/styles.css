@@ -53,7 +53,7 @@
 
   --container: 1240px;
   --gutter: clamp(1.25rem, 4vw, 3rem);
-  --section-y: clamp(5rem, 11vw, 9rem);
+  --section-y: clamp(3.5rem, 7.5vw, 6rem);
   --header-h: 88px;
   --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
 }
@@ -61,7 +61,8 @@
 /* ---------- Base ---------- */
 *, *::before, *::after { box-sizing: border-box; }
 /* Desktop sits at an effective 90% scale: sizes (rem) shrink 10%, the content column widens to match. */
-@media (min-width: 1100px) { html { font-size: 90%; } :root { --container: 1378px; } }
+@media (min-width: 900px) { html { font-size: 90%; } }
+@media (min-width: 1100px) { :root { --container: 1378px; } }
 html { scroll-behavior: smooth; scroll-padding-top: 80px; -webkit-text-size-adjust: 100%; }
 body {
   margin: 0;
@@ -177,7 +178,7 @@ button { font: inherit; color: inherit; }
   padding: calc(var(--header-h) + clamp(1rem, 4vh, 3.5rem)) var(--gutter) 2rem;
   text-align: center;
 }
-.hero__title { margin: 0 auto; width: min(56vw, 50rem, 62vh * 2.1); line-height: 0; }
+.hero__title { margin: 0 auto; width: min(56vw, 50rem, 54vh * 2.1); line-height: 0; }
 .hero__title img { width: 100%; height: auto; filter: drop-shadow(0 10px 40px rgba(0, 0, 0, .6)); }
 .hero__role {
   display: flex; align-items: center; justify-content: center; gap: 1.5rem;
@@ -234,7 +235,7 @@ button { font: inherit; color: inherit; }
 /* ---------- Section scaffolding ---------- */
 .section { padding-block: var(--section-y); position: relative; }
 .section + .section { border-top: 1px solid var(--line); }
-.section-head { margin-bottom: clamp(2rem, 4vw, 3.25rem); }
+.section-head { margin-bottom: clamp(1.5rem, 3vw, 2.5rem); }
 .section-head--row { display: flex; align-items: flex-end; justify-content: space-between; gap: 1.5rem; flex-wrap: wrap; }
 .eyebrow {
   font-size: .74rem; font-weight: 600; letter-spacing: var(--track-xwide); text-transform: uppercase;
@@ -242,7 +243,7 @@ button { font: inherit; color: inherit; }
 }
 .section-title {
   font-family: var(--font-display); font-weight: 400; text-transform: uppercase;
-  font-size: clamp(2.75rem, 7.5vw, 6.5rem); line-height: .92; letter-spacing: .005em;
+  font-size: clamp(2.4rem, 5.6vw, 4.75rem); line-height: .95; letter-spacing: .005em;
 }
 .section-title--sm { font-size: clamp(2rem, 4.5vw, 3.5rem); }
 .section-aside { font-size: .75rem; letter-spacing: var(--track-wide); text-transform: uppercase; color: var(--ink-3); }
@@ -419,6 +420,7 @@ button { font: inherit; color: inherit; }
   .plaques { grid-auto-columns: min(58%, 230px); overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: 1.5rem; -webkit-overflow-scrolling: touch; }
   .plaque { scroll-snap-align: start; }
 }
+@media (min-width: 901px) and (max-width: 1099px) { .plaques { grid-auto-flow: row; grid-template-columns: repeat(4, minmax(0, 1fr)); row-gap: 1.25rem; } }
 @media (prefers-reduced-motion: reduce) { .plaque { transition: none; } .plaque:hover { transform: none; } }
 
 /* ---------- Accolades (About) ---------- */
@@ -427,9 +429,11 @@ button { font: inherit; color: inherit; }
 .stat__value { font-family: var(--font-display); font-size: clamp(2.4rem, 5vw, 3.5rem); line-height: 1; }
 .stat__label { color: var(--ink-2); font-size: .92rem; margin-top: .45rem; }
 .stat__as { color: var(--ink-3); font-size: .75rem; margin-top: .15rem; }
-.accolades { margin-top: clamp(3rem, 6vw, 4.5rem); padding-top: clamp(2rem, 4vw, 2.75rem); border-top: 1px solid var(--line); }
+.accolades { margin-top: clamp(2.25rem, 4.5vw, 3.25rem); padding-top: clamp(2rem, 4vw, 2.75rem); border-top: 1px solid var(--line); }
 .accolades__title { font-family: var(--font-display); text-transform: uppercase; font-weight: 400; font-size: clamp(1.6rem, 3vw, 2.2rem); margin-bottom: 1.5rem; }
-.accolades__list { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1rem; }
+.accolades__list { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+@media (min-width: 1200px) { .accolades__list { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+@media (max-width: 640px) { .accolades__list { grid-template-columns: 1fr; } }
 .accolade { display: flex; gap: 1rem; align-items: flex-start; padding: 1.1rem 1.15rem; background: var(--bg-3); border: 1px solid var(--line); }
 .accolade__badge {
   flex: none; min-width: 4.2rem; padding: .45rem .6rem; text-align: center; font-family: var(--font-display); text-transform: uppercase;
