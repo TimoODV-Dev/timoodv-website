@@ -218,6 +218,7 @@ button { font: inherit; color: inherit; }
 .btn--solid { background: var(--red); color: #fff; }
 .btn--solid .icon { color: #fff; }
 .btn--solid:hover { background: var(--red-glow); }
+.hero__actions { display: flex; gap: .85rem; flex-wrap: wrap; justify-content: flex-end; }
 .btn--small { padding: .7rem 1rem; font-size: .72rem; background: transparent; color: var(--ink); }
 .btn--small:hover { background: var(--red); }
 .btn--disabled { border-color: var(--line); color: var(--ink-3); pointer-events: none; }
@@ -533,6 +534,8 @@ button { font: inherit; color: inherit; }
   .hero__footer { flex-direction: column-reverse; align-items: stretch; text-align: center; gap: 1.25rem; }
   .hero__location { justify-content: center; }
   .btn--outline { justify-content: center; }
+  .hero__actions { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; }
+  .hero__actions .btn { justify-content: center; padding-inline: 1rem; }
 
   .release-grid { gap: 1.25rem .9rem; }
   .gallery { grid-template-columns: 1fr 1fr; }
