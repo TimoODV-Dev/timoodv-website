@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { parseEvents, eventsToShows, eventDate, splitLocation, validFeedUrl, unfold, descriptionText } from './calendar.mjs';
+import { parseEvents, eventsToShows, eventDate, splitLocation, eventTime, validFeedUrl, unfold, descriptionText } from './calendar.mjs';
 import { cleanShows } from './shows.mjs';
 
 const ics = [
@@ -33,6 +33,10 @@ assert.deepEqual([nye.status, nye.url], ['soldout', ''], 'sold out drops the tic
 assert.deepEqual([fold.venue, fold.city, fold.event, fold.url], ['Venue', 'TBA', 'Folded title', ''], 'folded lines joined, javascript: url ignored');
 assert.deepEqual([club.date, club.status, club.city], ['2027-01-05', 'free', 'Johannesburg']);
 assert.equal(eventDate({ value: '20261231T230000Z' }), '2027-01-01');
+assert.equal(eventTime({ value: '20261212T210000' }), '21:00');
+assert.equal(eventTime({ value: '20261231T230000Z' }), '01:00');
+assert.equal(eventTime({ value: '20270105' }), '');
+assert.equal(eventTime(null), '');
 assert.deepEqual(splitLocation('H2O Festival, Cape Town, South Africa'), { venue: 'H2O Festival', city: 'Cape Town' });
 assert.deepEqual(splitLocation('The Circle, Maputo, Mozambique'), { venue: 'The Circle', city: 'Maputo' });
 assert.ok(validFeedUrl('https://calendar.google.com/calendar/ical/x%40group.calendar.google.com/private-abc/basic.ics'));

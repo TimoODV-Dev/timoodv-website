@@ -29,6 +29,7 @@ const platformLinks = (r: { title: string; url?: string }) => {
 };
 const videoTitle = video.title || 'Latest video';
 const videoId = /^[A-Za-z0-9_-]{11}$/.test(video.id || '') ? video.id : '';
+const weekdays = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 // Invalid entries are dropped here (and fail `npm test`), so a bad edit can never reach the page.
 // Accolades: plain text only, bounded, so a bad edit can never break the page.
@@ -192,19 +193,25 @@ const turnstileKey = /^[0-9A-Za-z_-]{10,60}$/.test(rawKey) ? rawKey : '';
       </header>
       {upcoming.length ? (
       <ol class="show-list">
-        {upcoming.map((s) => {
+        {upcoming.map((s, i) => {
           const d = new Date(s.date + 'T12:00:00+02:00');
+          const when = weekdays[d.getUTCDay()] + (s.time ? ' · ' + s.time : '');
           return (
-          <li class="show">
-            <time class="show__date" datetime={s.date}><span class="show__day">{String(d.getUTCDate()).padStart(2, '0')}</span><span class="show__month">{months[d.getUTCMonth()]}</span></time>
+          <li class:list={['show', i === 0 && 'show--next']}>
+            <time class="show__date" datetime={s.date + (s.time ? 'T' + s.time + ':00+02:00' : '')}>
+              {i === 0 && <span class="show__next">Next up</span>}
+              <span class="show__day">{String(d.getUTCDate()).padStart(2, '0')}</span>
+              <span class="show__month">{months[d.getUTCMonth()].toUpperCase()} {d.getUTCFullYear()}</span>
+              <span class="show__when">{when}</span>
+            </time>
             <div class="show__info">
               <p class="show__venue">{s.venue}</p>
-              <p class="show__city">{s.city}</p>
+              <p class="show__city">{s.city}{s.event ? ' · ' + s.event : ''}</p>
             </div>
-            <p class="show__event">{s.event || ''}</p>
             {s.status === 'soldout'
               ? <span class="btn btn--small btn--disabled" aria-disabled="true">Sold out</span>
-              : s.url ? <a class="btn btn--small" href={s.url} rel="noopener noreferrer" target="_blank">{s.status === 'free' ? 'Details' : 'Tickets'}</a> : null}
+              : s.url ? <a class={'btn btn--small' + (i === 0 ? ' btn--solid' : '')} href={s.url} rel="noopener noreferrer" target="_blank">{s.status === 'free' ? 'Details' : 'Tickets'}</a>
+              : s.status === 'free' ? <span class="show__free">Free entry</span> : null}
           </li>
           );
         })}

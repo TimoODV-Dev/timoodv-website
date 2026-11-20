@@ -3,7 +3,7 @@
 //
 // Privacy and safety rules (the calendar is personal data, and its text is data, never instructions):
 //   - Only the date, title, location, a ticket link (labelled "Tickets:" or on a known ticketing site) and the event's UID are used. Descriptions, attendees,
-//     organisers, notes and times are never copied anywhere.
+//     organisers and notes are never copied; only the start time is anywhere.
 //   - Events marked private/confidential, cancelled or tentative, and any whose title contains HOLD, TBC, TBA,
 //     PRIVATE or TENTATIVE, are skipped.
 //   - Everything still goes through scripts/shows.mjs (cleanShows), which rejects bad dates, < > and control
@@ -40,6 +40,15 @@ export function parseEvents(ics) {
     events.push(ev);
   }
   return events;
+}
+
+// Local start time (HH:MM, South African time) of DTSTART, or '' for all-day events.
+export function eventTime(dt) {
+  if (!dt || !dt.value) return '';
+  const m = dt.value.match(/^\d{8}T(\d{2})(\d{2})\d{2}(Z?)$/);
+  if (!m) return '';
+  const h = m[3] === 'Z' ? (+m[1] + 2) % 24 : +m[1];
+  return `${String(h).padStart(2, '0')}:${m[2]}`;
 }
 
 // Local date (YYYY-MM-DD) of DTSTART. Times in UTC (…Z) are converted to South African time (UTC+2, no DST);
@@ -120,6 +129,7 @@ export function eventsToShows(events, today) {
     seen.add(key);
     out.push({
       date,
+      time: eventTime(ev.DTSTART),
       venue: venue || title,
       city: city || 'TBA',
       event: venue ? title : '',
