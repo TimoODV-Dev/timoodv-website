@@ -215,10 +215,10 @@ async function recordArt() {
   const target = path.join(CONTENT, 'records.art.json');
   let out = {}; try { out = JSON.parse(await readFile(target, 'utf8')) || {}; } catch {}
   for (const r of records) {
-    const m = matchRecord(data.results || [], r.title);
+    const m = matchRecord(data.results || [], r.artFrom || r.title); // artFrom: use another release's cover and link (e.g. a track that only appears on an EP)
     if (!m) { log('record art: no match for', r.title); continue; }
     const file = `records/${slug(r.title)}.jpg`;
-    try { await download(m.src, path.join(IMG, file)); out[slug(r.title)] = { cover: `/img/${file}`, year: m.year, url: m.url }; } catch (e) { log('record art failed', r.title, e.message); }
+    try { await download(m.src, path.join(IMG, file)); out[slug(r.title)] = { cover: `/img/${file}`, year: r.artFrom ? '' : m.year, url: m.url }; } catch (e) { log('record art failed', r.title, e.message); }
   }
   return out;
 }
