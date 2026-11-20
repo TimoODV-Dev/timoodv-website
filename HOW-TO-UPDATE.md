@@ -5,7 +5,7 @@ Edit files in `src/content/`, commit to `main`, and Cloudflare Pages rebuilds au
 | File | What it controls |
 |---|---|
 | `bio.md` | The Story text (first paragraph is shown larger) |
-| `shows.json` | Event Details. One object per show, see the example below. Past dates hide themselves. Empty list shows "No dates announced" |
+| `shows.json` | Event Details. **Filled automatically from TiMO ODV's gig calendar** once `GIG_CALENDAR_ICS` is set (see below); otherwise edited by hand (example below). Past dates hide themselves |
 | `links.json` | Instagram, YouTube, Spotify and Apple Music links (header icons and the red Listen band) |
 | `site.json` | Booking email address |
 | `releases.json` | Manual fallback releases, used only if the automatic Spotify/Apple lookup returns nothing |
@@ -22,7 +22,14 @@ Photos: put gallery photos in `public/img/gallery/` (1600x900) and swap the plac
 `status` can be `tickets`, `free` or `soldout` (sold out needs no url). `uid` is optional and stops the same gig being added twice.
 Entries are checked at build time: a bad date, a `<` or `>`, a non-https link and so on is ignored (never published), and `npm test` fails so it is caught before merging. Run `npm test` to check.
 
-Gigs are normally added by Grok's daily task after Tim approves each one; see `GROK-TASKS.md`.
+## Gigs: straight from Tim's calendar
+Every build reads his gig calendar and rewrites `shows.json` with the upcoming gigs (and an empty list when there are none). There is no approval step: **whatever is in that calendar goes on the site**, so use a calendar that holds only public gigs.
+- **Title** = event name, e.g. `The Garden Party`.
+- **Location** = `Venue, City` (a full Google Maps address also works: the first part is the venue, the town is picked out after it).
+- **Description** (optional), one per line: `Tickets: https://...`, or `Free entry`, or `Sold out`. An unlabelled link is also used if it is on a ticketing site (Quicket, Howler, Computicket, Webtickets, TicketPro, Ticketmaster, Eventbrite, Resident Advisor, Dice). Nothing else from the description is ever used, so meeting links, fees and contacts there stay private.
+- **Skipped automatically:** events marked Private, Cancelled or Tentative, and titles containing HOLD, TBC, TBA, PRIVATE or TENTATIVE.
+- **Setup:** Google Calendar → the gig calendar's Settings → Integrate calendar → **Secret address in iCal format**. Save it in Cloudflare Pages as the encrypted secret `GIG_CALENDAR_ICS` (Production). It is a secret: never put it in the repo, a chat or an email. If it ever leaks, reset it in Google Calendar and save the new one.
+- New gigs appear after the next build: the nightly rebuild, or any merge.
 
 ## What updates by itself
 Every build (every push, and every night at about 05:17 SAST) the site fetches:

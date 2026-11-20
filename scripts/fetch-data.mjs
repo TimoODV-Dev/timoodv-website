@@ -12,6 +12,8 @@ import { writeFile, readFile, mkdir } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { parseEvents, eventsToShows, validFeedUrl } from './calendar.mjs';
+import { cleanShows } from './shows.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const CONTENT = path.join(ROOT, 'src/content');
@@ -221,6 +223,28 @@ async function recordArt() {
   return out;
 }
 
+// ---------- gig calendar -> shows.json ----------
+// GIG_CALENDAR_ICS is the calendar's secret iCal address (a Cloudflare build secret, never in the repo or logs).
+// Without it, shows.json is left as it is (edited by hand). With it, shows.json mirrors the calendar's upcoming gigs,
+// including becoming empty when there are none. Any failure keeps the previous file.
+async function gigCalendar() {
+  const feed = validFeedUrl(env.GIG_CALENDAR_ICS);
+  if (!env.GIG_CALENDAR_ICS) { log('gig calendar: not configured; keeping shows.json'); return; }
+  if (!feed) { log('gig calendar: GIG_CALENDAR_ICS is not an https .ics address; keeping shows.json'); return; }
+  let text = '';
+  try {
+    const r = await fetch(feed, { headers: { 'User-Agent': UA }, signal: AbortSignal.timeout(15000) });
+    if (!r.ok) throw new Error(`HTTP ${r.status}`); // never include the address: it is a secret
+    text = await r.text();
+  } catch (e) { log('gig calendar: fetch failed, keeping shows.json:', String(e.message || e).replace(/https?:\/\/\S+/g, '[calendar]')); return; }
+  if (!/BEGIN:VCALENDAR/.test(text)) { log('gig calendar: response is not a calendar; keeping shows.json'); return; }
+  const today = new Date(Date.now() + 2 * 3600e3).toISOString().slice(0, 10); // SAST
+  const { shows, problems } = cleanShows(eventsToShows(parseEvents(text), today));
+  if (problems.length) log('gig calendar: skipped', problems.length, 'entries that failed validation');
+  await writeFile(path.join(CONTENT, 'shows.json'), JSON.stringify(shows, null, 2) + '\n');
+  log('gig calendar:', shows.length, 'upcoming show(s) written');
+}
+
 // ---------- live stats ----------
 const wholeNumber = (v) => { const n = Number(v); return Number.isFinite(n) && n >= 0 && n < 1e12 ? Math.floor(n) : null; };
 export const mapYoutubeStats = (j) => {
@@ -269,5 +293,6 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   await step('releases', 'releases.auto.json', latestReleases, []);
   await step('instagram gallery', 'gallery.json', instagramGallery, []);
   await step('live stats', 'stats.auto.json', liveStats, {});
+  try { await gigCalendar(); } catch (e) { log('gig calendar failed, keeping shows.json:', String(e && e.message || e).replace(/https?:\/\/\S+/g, '[calendar]')); }
   await step('record art', 'records.art.json', recordArt, {});
 }
