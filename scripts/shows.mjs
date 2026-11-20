@@ -40,6 +40,8 @@ export function cleanShows(raw) {
     if (venue === null) return bad('venue missing, too long, or contains < > or control characters');
     const city = text(s.city, 100, { required: true });
     if (city === null) return bad('city missing, too long, or contains < > or control characters');
+    const time = s.time == null || s.time === '' ? '' : (typeof s.time === 'string' && /^([01]\d|2[0-3]):[0-5]\d$/.test(s.time) ? s.time : null);
+    if (time === null) return bad('time must be HH:MM (24-hour) or empty');
     const event = text(s.event, 120);
     if (event === null) return bad('event too long, or contains < > or control characters');
     const status = s.status == null || s.status === '' ? 'tickets' : s.status;
@@ -57,7 +59,7 @@ export function cleanShows(raw) {
     const key = uid || `${s.date}|${venue.toLowerCase()}`;
     if (seen.has(key)) return bad('duplicate of an earlier entry');
     seen.add(key);
-    shows.push({ date: s.date, venue, city, event, status, url: status === 'soldout' ? '' : url, uid });
+    shows.push({ date: s.date, time, venue, city, event, status, url: status === 'soldout' ? '' : url, uid });
   });
   if (shows.length > MAX_SHOWS) { problems.push(`more than ${MAX_SHOWS} shows; extra entries ignored`); shows.length = MAX_SHOWS; }
   shows.sort((a, b) => a.date.localeCompare(b.date));

@@ -315,17 +315,29 @@ button { font: inherit; color: inherit; }
 .section--dates { background: var(--bg-2); }
 .show-list { border-top: 1px solid var(--line); }
 .show {
-  display: grid; grid-template-columns: 7rem 1.2fr 1fr auto; align-items: center; gap: 1.5rem;
-  padding: 1.6rem 0; border-bottom: 1px solid var(--line);
+  display: grid; grid-template-columns: 7rem 1fr auto; align-items: center; gap: 1.5rem;
+  padding: 1.4rem 0; border-bottom: 1px solid var(--line);
   transition: background-color .25s;
 }
 .show:hover { background: linear-gradient(90deg, rgba(229, 35, 47, .08), transparent 60%); }
-.show__date { display: flex; align-items: baseline; gap: .6rem; }
-.show__day { font-family: var(--font-display); font-size: 3rem; line-height: 1; }
-.show__month { font-size: .8rem; font-weight: 600; letter-spacing: var(--track-wide); text-transform: uppercase; color: var(--red-glow); }
-.show__venue { font-family: var(--font-display); font-size: clamp(1.4rem, 2.4vw, 2rem); text-transform: uppercase; line-height: 1.05; }
-.show__city { font-size: .78rem; letter-spacing: .14em; text-transform: uppercase; color: var(--ink-2); margin-top: .25rem; }
-.show__event { color: var(--ink-2); font-size: .95rem; }
+.show__date { display: block; line-height: 1; white-space: nowrap; }
+.show__day { display: block; font-family: var(--font-display); font-size: 2.6rem; line-height: 1; }
+.show__month { display: block; margin-top: .4rem; font-size: .75rem; font-weight: 600; letter-spacing: .2em; color: var(--red-glow); }
+.show__when { display: block; margin-top: .4rem; font-size: .68rem; letter-spacing: .14em; text-transform: uppercase; color: var(--ink-3); }
+.show__next { display: block; margin-bottom: .5rem; font-size: .7rem; letter-spacing: .3em; text-transform: uppercase; color: var(--red-glow); }
+.show__venue { font-family: var(--font-display); font-size: clamp(1.3rem, 2.2vw, 1.8rem); text-transform: uppercase; line-height: 1.05; }
+.show__city { font-size: .78rem; letter-spacing: .14em; text-transform: uppercase; color: var(--ink-2); margin-top: .35rem; }
+.show__free { font-size: .72rem; font-weight: 600; letter-spacing: .22em; text-transform: uppercase; color: var(--red-glow); }
+.show--next {
+  grid-template-columns: auto 1fr auto; gap: 2rem; padding: 2rem;
+  background: linear-gradient(90deg, rgba(229, 35, 47, .22), rgba(229, 35, 47, .04)); border: 1px solid var(--red); margin: 0 0 1.2rem;
+}
+.show--next:hover { background: linear-gradient(90deg, rgba(229, 35, 47, .28), rgba(229, 35, 47, .06)); }
+.show--next .show__date { text-align: center; padding-right: 2rem; border-right: 1px solid rgba(255, 255, 255, .2); }
+.show--next .show__day { font-size: 5rem; }
+.show--next .show__venue { font-size: clamp(1.8rem, 3.4vw, 3rem); }
+.show--next .btn { padding: 1.1rem 1.8rem; font-size: .8rem; background: var(--red); color: #fff; }
+.show--next .btn--disabled { background: transparent; color: var(--ink-3); }
 .show-empty { padding: 2rem 0; color: var(--ink-2); border-top: 1px solid var(--line); }
 
 /* ---------- About ---------- */
@@ -518,9 +530,8 @@ button { font: inherit; color: inherit; }
   .site-nav__label { display: inline; }
   body.nav-open { overflow: hidden; }
 
-  .show { grid-template-columns: 5.5rem 1fr auto; row-gap: .35rem; }
-  .show__event { grid-column: 2; grid-row: 2; font-size: .85rem; }
-  .show .btn { grid-column: 3; grid-row: 1 / span 2; }
+  .show { grid-template-columns: 5.5rem 1fr auto; }
+  .show--next { gap: 1.25rem; padding: 1.5rem; }
 
   .about, .contact { grid-template-columns: 1fr; }
   .about__media { max-width: 520px; margin-right: 1.25rem; }
@@ -546,10 +557,13 @@ button { font: inherit; color: inherit; }
   .form__row { grid-template-columns: 1fr; }
   .form .btn--solid { justify-self: stretch; justify-content: center; }
   .about__facts { grid-template-columns: 1fr 1fr; gap: 1.5rem; }
-  .show { grid-template-columns: 4.25rem 1fr; }
-  .show__date { flex-direction: column; gap: .1rem; }
-  .show__day { font-size: 2.4rem; }
-  .show .btn { grid-column: 2; grid-row: 3; justify-self: start; margin-top: .5rem; }
+  .show { grid-template-columns: 5.2rem 1fr; gap: 1rem; }
+  .show .btn, .show__free { grid-column: 2; justify-self: start; }
+  .show--next { grid-template-columns: auto 1fr; padding: 1.2rem; }
+  .show--next .show__date { padding-right: 1rem; }
+  .show--next .show__day { font-size: 3.4rem; }
+  .show--next .show__venue { font-size: 1.6rem; }
+  .show--next .btn, .show--next .show__free { grid-column: 1 / -1; justify-self: stretch; justify-content: center; text-align: center; }
 }
 
 @media (prefers-reduced-motion: reduce) {
