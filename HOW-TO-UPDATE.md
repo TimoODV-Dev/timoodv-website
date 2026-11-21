@@ -58,9 +58,6 @@ Privacy, Terms and Cookie pages read their details from `src/content/legal.json`
 Do not edit anything outside `src/content/` unless you know what you are doing.
 
 
-## Accolades (About section)
-Edit `src/content/accolades.json`. Each entry has `badge` (e.g. "Gold", "Platinum", "SAMA"), `year`, `title` and `detail`. Only add certifications and awards that can be verified (RiSA certificate, award body listing, or an official press release). New entries show automatically after the next deploy.
-
 ## Live numbers ("By the numbers" in the Accolades section)
 - **Automatic (every nightly rebuild):** YouTube channel views (needs a `YOUTUBE_API_KEY` secret on Cloudflare Pages, a read-only Google key limited to the YouTube Data API) and Instagram followers (uses the existing Instagram token). If a key is missing or a lookup fails, the previous number stays.
 - **By hand, about once a month:** open `src/content/stats.manual.json` and set `spotifyStreams`, `appleMusicStreams` (whole numbers, from Spotify for Artists and Apple Music for Artists) and `asOf` (`YYYY-MM`). A tile only shows when its number is above zero.
