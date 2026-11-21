@@ -68,6 +68,14 @@ const records = (Array.isArray(rawRecords.records) ? rawRecords.records : []).sl
   ];
   return { title, listen, level, tier: level ? level.toLowerCase().replace('multi-', '') : 'certified', year: [r.year, meta.year].map(String).find((y) => /^\d{4}$/.test(y)) || '', art: typeof art === 'string' && /^\/img\/records\/[a-z0-9-]+\.jpg$/.test(art) ? art : '' };
 }).filter((r: any) => r.title);
+// Only https links to the expected platform are used anywhere in the band; a missing or odd link is skipped.
+const okUrl = (u: unknown, re: RegExp) => (typeof u === 'string' && re.test(u) ? u : '');
+const platforms = [
+  { name: 'Spotify', icon: 'spotify', href: okUrl(links.spotify, /^https:\/\/open\.spotify\.com\//) },
+  { name: 'Apple Music', icon: 'applemusic', href: okUrl(links.appleMusic, /^https:\/\/music\.apple\.com\//) },
+  { name: 'YouTube', icon: 'youtube', href: okUrl(links.youtube, /^https:\/\/(www\.)?youtube\.com\//) },
+  { name: 'Instagram', icon: 'instagram', href: okUrl(links.instagram, /^https:\/\/(www\.)?instagram\.com\//) },
+].filter((p) => p.href);
 const sameAs = [links.instagram, links.youtube, links.spotify, links.appleMusic].filter((u) => /^https:\/\//.test(u || ''));
 const jsonLd = {
   '@context': 'https://schema.org',
@@ -317,10 +325,7 @@ const turnstileKey = /^[0-9A-Za-z_-]{10,60}$/.test(rawKey) ? rawKey : '';
     <div class="container">
       <h2 class="visually-hidden" id="listen-title">Listen and follow</h2>
       <ul class="platforms">
-        <li><a href={links.spotify} rel="me noopener noreferrer" target="_blank">Spotify</a></li>
-        <li><a href={links.appleMusic} rel="me noopener noreferrer" target="_blank">Apple Music</a></li>
-        <li><a href={links.youtube} rel="me noopener noreferrer" target="_blank">YouTube</a></li>
-        <li><a href={links.instagram} rel="me noopener noreferrer" target="_blank">Instagram</a></li>
+        {platforms.map((p) => <li><a href={p.href} rel="me noopener noreferrer" target="_blank"><svg class="platforms__icon" aria-hidden="true" focusable="false"><use href={`#i-${p.icon}`} /></svg>{p.name}</a></li>)}
       </ul>
     </div>
   </section>
