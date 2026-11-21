@@ -8,7 +8,6 @@ import rawShows from '../content/shows.json';
 import { cleanShows } from '../../scripts/shows.mjs';
 import video from '../content/latest-video.json';
 import gallery from '../content/gallery.json';
-import accoladesRaw from '../content/accolades.json';
 import recordsRaw from '../content/records.json';
 import recordArt from '../content/records.art.json';
 import statsAuto from '../content/stats.auto.json';
@@ -37,11 +36,8 @@ const bioMore = bioParas.slice(2);
 const weekdays = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 // Invalid entries are dropped here (and fail `npm test`), so a bad edit can never reach the page.
-// Accolades: plain text only, bounded, so a bad edit can never break the page.
+// Plain-text helper, bounded, so a bad edit can never break the page.
 const t = (v: unknown, n: number) => String(v ?? '').replace(/[<>]/g, '').trim().slice(0, n);
-const accolades = (Array.isArray(accoladesRaw) ? accoladesRaw : [])
-  .map((a: any) => ({ badge: t(a.badge, 14), year: /^\d{4}$/.test(String(a.year)) ? String(a.year) : '', title: t(a.title, 80), detail: t(a.detail, 220) }))
-  .filter((a) => a.title).slice(0, 12);
 // "By the numbers": YouTube/Instagram update themselves each night; Spotify/Apple totals are typed in by hand (stats.manual.json).
 const whole = (v: unknown) => { const n = Number(v); return Number.isFinite(n) && n > 0 && n < 1e12 ? Math.floor(n) : 0; };
 const short = (n: number) => n >= 1e6 ? `${Math.floor(n / 1e5) / 10}M+`.replace('.0M', 'M') : n >= 1e3 ? `${Math.floor(n / 100) / 10}K+`.replace('.0K', 'K') : String(n);
@@ -252,7 +248,7 @@ const turnstileKey = /^[0-9A-Za-z_-]{10,60}$/.test(rawKey) ? rawKey : '';
         </dl>
       </div>
     </div>
-    {(accolades.length > 0 || records.length > 0) && (
+    {(records.length > 0 || statTiles.length > 0) && (
     <div class="container accolades" aria-labelledby="accolades-title">
       <h3 class="accolades__title" id="accolades-title">Accolades</h3>
       {statTiles.length > 0 && (
@@ -294,17 +290,6 @@ const turnstileKey = /^[0-9A-Za-z_-]{10,60}$/.test(rawKey) ? rawKey : '';
           </ul>
         </div>
       )}
-      <ul class="accolades__list">
-        {accolades.map((a) => (
-          <li class="accolade">
-            {a.badge && <span class="accolade__badge" data-badge={a.badge.toLowerCase()}>{a.badge}</span>}
-            <div>
-              <p class="accolade__title">{a.title}{a.year && <span class="accolade__year"> · {a.year}</span>}</p>
-              {a.detail && <p class="accolade__detail">{a.detail}</p>}
-            </div>
-          </li>
-        ))}
-      </ul>
     </div>
   )}
   </section>
