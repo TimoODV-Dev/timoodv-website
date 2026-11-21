@@ -61,8 +61,7 @@
 /* ---------- Base ---------- */
 *, *::before, *::after { box-sizing: border-box; }
 /* Desktop sits at an effective 90% scale: sizes (rem) shrink 10%, the content column widens to match. */
-@media (min-width: 900px) { html { font-size: 90%; } }
-@media (min-width: 1100px) { :root { --container: 1378px; } }
+@media (min-width: 1600px) { html { font-size: 90%; } :root { --container: 1378px; } }
 html { scroll-behavior: smooth; scroll-padding-top: 80px; -webkit-text-size-adjust: 100%; }
 body {
   margin: 0;
@@ -235,7 +234,7 @@ button { font: inherit; color: inherit; }
 /* ---------- Section scaffolding ---------- */
 .section { padding-block: var(--section-y); position: relative; }
 .section + .section { border-top: 1px solid var(--line); }
-.section-head { margin-bottom: clamp(1.5rem, 3vw, 2.5rem); }
+.section-head { margin-bottom: clamp(1rem, 2vw, 1.6rem); }
 .section-head--row { display: flex; align-items: flex-end; justify-content: space-between; gap: 1.5rem; flex-wrap: wrap; }
 .eyebrow {
   font-size: .74rem; font-weight: 600; letter-spacing: var(--track-xwide); text-transform: uppercase;
@@ -243,9 +242,9 @@ button { font: inherit; color: inherit; }
 }
 .section-title {
   font-family: var(--font-display); font-weight: 400; text-transform: uppercase;
-  font-size: clamp(2.4rem, 5.6vw, 4.75rem); line-height: .95; letter-spacing: .005em;
+  font-size: clamp(2rem, 3.9vw, 3.4rem); line-height: .95; letter-spacing: .005em;
 }
-.section-title--sm { font-size: clamp(2rem, 4.5vw, 3.5rem); }
+.section-title--sm { font-size: clamp(1.7rem, 3vw, 2.4rem); }
 .section-aside { font-size: .75rem; letter-spacing: var(--track-wide); text-transform: uppercase; color: var(--ink-3); }
 
 /* ---------- Music: video facade ---------- */
@@ -510,13 +509,18 @@ button { font: inherit; color: inherit; }
 /* =========================================================
    Responsive
    ========================================================= */
+/* Portrait screens up to tablet size use the upright crop of the hero photo (see index.astro), centred on Tim. */
+@media (max-width: 1100px) and (orientation: portrait), (max-width: 700px) {
+  .hero__photo { object-position: 50% 70%; }
+}
 @media (max-width: 1100px) {
   .site-nav__label { display: none; }
   .release-grid { grid-template-columns: repeat(2, 1fr); }
 }
 
-@media (max-width: 900px) {
+@media (max-width: 1100px) {
   :root { --header-h: 72px; }
+  .social-chip { width: 2.75rem; height: 2.75rem; }
   .nav-toggle { display: block; }
   .site-nav {
     position: fixed; inset: 0; z-index: 55;
@@ -529,7 +533,9 @@ button { font: inherit; color: inherit; }
   .site-nav__list a { font-family: var(--font-display); font-size: 2.6rem; letter-spacing: .02em; font-weight: 400; }
   .site-nav__label { display: inline; }
   body.nav-open { overflow: hidden; }
+}
 
+@media (max-width: 900px) {
   .show { grid-template-columns: 5.5rem 1fr auto; }
   .show--next { gap: 1.25rem; padding: 1.5rem; }
 
@@ -643,3 +649,40 @@ button { font: inherit; color: inherit; }
 .video-facade__play:hover .video-facade__yt-bg, .video-facade__play:focus-visible .video-facade__yt-bg { fill: #f00; fill-opacity: 1; }
 .video-facade__play:focus-visible { outline: 2px solid #fff; outline-offset: 4px; }
 @media (max-width: 600px) { .video-facade__meta { left: 1rem; right: 1rem; bottom: .9rem; } .video-facade__meta .tag { display: none; } .video-facade__title { font-size: 1.1rem; margin-top: 0; } .video-facade__note { font-size: .66rem; margin-top: .3rem; } }
+
+/* Tablet band (701-1100px): keep two columns where they read well instead of stretching the phone layout. */
+@media (min-width: 701px) and (max-width: 1100px) {
+  .about { grid-template-columns: minmax(0, 2fr) minmax(0, 3fr); gap: clamp(2rem, 5vw, 4rem); align-items: start; }
+  .about__media { max-width: none; margin-right: 1.25rem; }
+  .contact { grid-template-columns: 1fr; }
+  .contact__intro > p:not(.eyebrow) { max-width: 60ch; }
+  .form__row { grid-template-columns: 1fr 1fr; }
+  .site-footer__top { grid-template-columns: 1.4fr 1fr 1fr 1fr; }
+  .site-footer__brand { grid-column: auto; }
+/* ---------- Lighter page ---------- */
+.about__more summary { cursor: pointer; display: inline-flex; align-items: center; gap: .5rem; margin-top: 1.1rem; font-size: .74rem; font-weight: 600; letter-spacing: var(--track-wide); text-transform: uppercase; color: var(--red-glow); list-style: none; }
+.about__more summary::-webkit-details-marker { display: none; }
+.about__more summary::after { content: "+"; font-size: 1rem; line-height: 1; }
+.about__more[open] summary::after { content: "\2212"; }
+.about__more-close, .about__more[open] .about__more-open { display: none; }
+.about__more[open] .about__more-close { display: inline; }
+.about__more > p { color: var(--ink-2); max-width: 60ch; margin-top: 1.1rem; }
+.video-facade + .section-head--row { margin-top: clamp(1.75rem, 3vw, 2.5rem); }
+.section--compact { padding-block: clamp(2rem, 4vw, 2.75rem); }
+.section--compact .section-head { margin-bottom: .75rem; }
+.section--compact .section-title { font-size: clamp(1.4rem, 2.6vw, 1.9rem); }
+.section--compact .show-empty { padding: .9rem 0 0; }
+.section--listen { padding-block: clamp(1.75rem, 3.5vw, 2.5rem); }
+.platforms { flex-wrap: nowrap; gap: .25rem clamp(1rem, 2.4vw, 2.25rem); }
+.platforms a { white-space: nowrap; }
+@media (max-width: 600px) { .platforms { gap: .25rem .8rem; } .platforms a { font-size: 1.2rem; } }
+.gallery { grid-template-columns: repeat(6, 1fr); }
+.gallery__item { aspect-ratio: 1; }
+@media (max-width: 1100px) { .gallery { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 600px) {
+  .gallery { grid-template-columns: 1fr 1fr; }
+  .gallery__item:last-child:nth-child(even), .gallery__item--wide { grid-column: auto; grid-row: auto; aspect-ratio: 1; }
+  .site-footer__top { grid-template-columns: 1fr 1fr; gap: 1.75rem 1.25rem; }
+  .site-footer__col:last-child { grid-column: 1 / -1; }
+  .site-footer__col:last-child ul { display: flex; flex-wrap: wrap; gap: .5rem 1.5rem; }
+}
