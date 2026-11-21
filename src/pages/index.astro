@@ -13,7 +13,6 @@ import recordsRaw from '../content/records.json';
 import recordArt from '../content/records.art.json';
 import statsAuto from '../content/stats.auto.json';
 import statsManual from '../content/stats.manual.json';
-import { Content as Bio } from '../content/bio.md';
 
 // Latest releases come from Spotify / Apple Music at build time; releases.json is a manual fallback.
 const releases = (autoReleases.length ? autoReleases : manualReleases).slice(0, 4);
@@ -29,6 +28,12 @@ const platformLinks = (r: { title: string; url?: string }) => {
 };
 const videoTitle = video.title || 'Latest video';
 const videoId = /^[A-Za-z0-9_-]{11}$/.test(video.id || '') ? video.id : '';
+import bioRaw from '../content/bio.md?raw';
+const escHtml = (x: string) => x.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+const bioParas = String(bioRaw).split(/\n\s*\n/).map((p) => p.trim()).filter(Boolean)
+  .map((p) => escHtml(p.replace(/\s+/g, ' ')).replace(/\*([^*]+)\*/g, '<em>$1</em>'));
+const bioLead = bioParas.slice(0, 2);
+const bioMore = bioParas.slice(2);
 const weekdays = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 // Invalid entries are dropped here (and fail `npm test`), so a bad edit can never reach the page.
@@ -98,6 +103,9 @@ const turnstileKey = /^[0-9A-Za-z_-]{10,60}$/.test(rawKey) ? rawKey : '';
   <section class="hero" id="top" aria-labelledby="hero-title">
     <div class="hero__bg" aria-hidden="true">
       <picture>
+        <source media="(max-width: 1100px) and (orientation: portrait), (max-width: 700px)" type="image/avif" srcset="/img/hero-m-800.avif 800w, /img/hero-m-1200.avif 1200w" sizes="100vw">
+        <source media="(max-width: 1100px) and (orientation: portrait), (max-width: 700px)" type="image/webp" srcset="/img/hero-m-800.webp 800w, /img/hero-m-1200.webp 1200w" sizes="100vw">
+        <source media="(max-width: 1100px) and (orientation: portrait), (max-width: 700px)" srcset="/img/hero-m-800.jpg 800w, /img/hero-m-1200.jpg 1200w" sizes="100vw">
         <source type="image/avif" srcset="/img/hero-1000.avif 1000w, /img/hero-1800.avif 1800w, /img/hero-2576.avif 2576w" sizes="100vw">
         <source type="image/webp" srcset="/img/hero-1000.webp 1000w, /img/hero-1800.webp 1800w, /img/hero-2576.webp 2576w" sizes="100vw">
         <img class="hero__photo" src="/img/hero-1800.jpg" srcset="/img/hero-1000.jpg 1000w, /img/hero-1800.jpg 1800w, /img/hero-2576.jpg 2576w" sizes="100vw" width="2576" height="1717" alt="" fetchpriority="high">
@@ -128,7 +136,6 @@ const turnstileKey = /^[0-9A-Za-z_-]{10,60}$/.test(rawKey) ? rawKey : '';
   <section class="section section--music" id="music" aria-labelledby="music-title">
     <div class="container">
       <header class="section-head">
-        <p class="eyebrow">01 — Music</p>
         <h2 class="section-title" id="music-title">New Official Clip</h2>
       </header>
       {videoId ? (
@@ -182,11 +189,10 @@ const turnstileKey = /^[0-9A-Za-z_-]{10,60}$/.test(rawKey) ? rawKey : '';
   </section>
 
   <!-- DATES -->
-  <section class="section section--dates" id="dates" aria-labelledby="dates-title">
+  <section class={`section section--dates${upcoming.length ? '' : ' section--compact'}`} id="dates" aria-labelledby="dates-title">
     <div class="container">
       <header class="section-head section-head--row">
         <div>
-          <p class="eyebrow">02 — Live</p>
           <h2 class="section-title" id="dates-title">Event Details</h2>
         </div>
         <p class="section-aside">All times SAST</p>
@@ -230,9 +236,16 @@ const turnstileKey = /^[0-9A-Za-z_-]{10,60}$/.test(rawKey) ? rawKey : '';
         <figcaption>Johannesburg, South Africa</figcaption>
       </figure>
       <div class="about__text">
-        <p class="eyebrow">03 — About</p>
         <h2 class="section-title" id="about-title">The Story</h2>
-        <div class="about__body"><Bio /></div>
+        <div class="about__body">
+          {bioLead.map((p) => <p set:html={p} />)}
+          {bioMore.length > 0 && (
+            <details class="about__more">
+              <summary><span class="about__more-open">Read more</span><span class="about__more-close">Read less</span></summary>
+              {bioMore.map((p) => <p set:html={p} />)}
+            </details>
+          )}
+        </div>
         <dl class="about__facts">
           <div><dt>Based</dt><dd>Johannesburg</dd></div>
           <div><dt>From</dt><dd>Kempton Park</dd></div>
@@ -300,12 +313,11 @@ const turnstileKey = /^[0-9A-Za-z_-]{10,60}$/.test(rawKey) ? rawKey : '';
   <section class="section section--visuals" id="visuals" aria-labelledby="visuals-title">
     <div class="container">
       <header class="section-head">
-        <p class="eyebrow">04 — Social Gallery</p>
         <h2 class="section-title" id="visuals-title">Social Gallery</h2>
       </header>
       <ul class="gallery">
         {gallery.map((g, i) => (
-          <li class={`gallery__item${i === 0 ? ' gallery__item--wide' : ''}`}>
+          <li class="gallery__item">
             {g.url
               ? <a href={g.url} rel="noopener noreferrer" target="_blank" aria-label={`${g.alt} (opens Instagram)`}><img src={g.src} alt={g.alt} width="1080" height="1080" loading="lazy"></a>
               : <img src={g.src} alt={g.alt} width="1600" height="900" loading="lazy">}
@@ -332,7 +344,6 @@ const turnstileKey = /^[0-9A-Za-z_-]{10,60}$/.test(rawKey) ? rawKey : '';
   <section class="section section--contact" id="contact" aria-labelledby="contact-title">
     <div class="container contact">
       <div class="contact__intro">
-        <p class="eyebrow">05 — Contact</p>
         <h2 class="section-title" id="contact-title">Bookings</h2>
         <p>For club nights, festivals and private events, send the details below and the team will come back to you.</p>
         <dl class="contact__lines">
