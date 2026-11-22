@@ -1,0 +1,6 @@
+{
+  "_help": "heroPersonX / portraitPersonX: where the person stands, 0 = left edge, 50 = middle, 100 = right edge. heroSpaceAbove: plain space added above the hero photo, 0-40 (% of its height), so the person clears the logo on laptops.",
+  "heroPersonX": 50,
+  "heroSpaceAbove": 0,
+  "portraitPersonX": 50
+}
