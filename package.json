@@ -7,12 +7,14 @@
     "build": "astro build",
     "preview": "astro preview",
     "fetch-data": "node scripts/fetch-data.mjs",
-    "predev": "node scripts/fetch-data.mjs",
-    "prebuild": "node scripts/fetch-data.mjs",
+    "photos": "node scripts/photos.mjs",
+    "predev": "node scripts/photos.mjs && node scripts/fetch-data.mjs",
+    "prebuild": "node scripts/photos.mjs && node scripts/fetch-data.mjs",
     "validate:shows": "node scripts/validate-shows.mjs",
-    "test": "node scripts/test-fetch-data.mjs && node scripts/test-shows.mjs && node scripts/test-calendar.mjs && node scripts/test-booking.mjs && node scripts/test-smtp.mjs && node scripts/test-emails.mjs && node scripts/validate-shows.mjs"
+    "test": "node scripts/test-fetch-data.mjs && node scripts/test-shows.mjs && node scripts/test-calendar.mjs && node scripts/test-booking.mjs && node scripts/test-smtp.mjs && node scripts/test-emails.mjs && node scripts/test-guard.mjs && node scripts/validate-shows.mjs"
   },
   "dependencies": {
-    "astro": "^7.4.13"
+    "astro": "^7.4.13",
+    "sharp": "0.35.5"
   }
 }

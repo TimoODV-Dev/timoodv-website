@@ -9,8 +9,13 @@ Edit files in `src/content/`, commit to `main`, and Cloudflare Pages rebuilds au
 | `links.json` | Instagram, YouTube, Spotify and Apple Music links (header icons and the red Listen band) |
 | `site.json` | Booking email address |
 | `releases.json` | Manual fallback releases, used only if the automatic Spotify/Apple lookup returns nothing |
+| `records.json`, `stats.manual.json` | Certified records (level, year, optional links) and the Spotify / Apple Music totals. Only verified facts |
+| `photos/hero.*`, `photos/portrait.*` | The hero banner and the About photo (one source file each: JPEG, PNG or WebP). Every size, the phone crop and the link preview are made at build time by `scripts/photos.mjs` |
+| `photos.json` | Photo placement: `heroPersonX` / `portraitPersonX` (where the person stands, 0-100) and `heroSpaceAbove` (0-40, plain space above the hero so the logo clears his face) |
 
-Photos: put gallery photos in `public/img/gallery/` (1600x900) and swap the placeholder paths in `src/pages/index.astro`.
+**Caretaker limits:** pull requests from anyone other than Kevin may only change `bio.md`, `records.json`, `stats.manual.json`, `releases.json`, `photos.json` and the two photos. The **Content guard** workflow enforces this (and checks the content) and must be a required check on `main`. A bad photo or setting stops the build, so the live site keeps its previous version. After a photo change, run `npm run photos` locally and commit the regenerated `public/img` / `public/images` files and `photos/.stamp` when convenient, so builds can skip the step again.
+
+The hero photo must be landscape, at least 2000x1100; the bio photo upright, at least 800x1100; JPEG, PNG or WebP, under 15 MB, one file each. The hero's phone crop (5:7), the link preview (1200x630) and the portrait (800x1175) are cut automatically.
 
 ## shows.json example
 ```json

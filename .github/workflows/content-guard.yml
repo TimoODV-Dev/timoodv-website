@@ -1,0 +1,49 @@
+# Content guard: decides whether a pull request may be merged.
+# Pull requests from the caretaker (Tim's Grok caretaker, or anyone other than the technical owner) may only
+# change the bio, certified records, streaming numbers, releases fallback and the two photos, and that content must pass checks.
+# Design, code, workflows and security settings can only be changed by the technical owner (Kevin).
+#
+# Security: this runs the guard from `main` (pull_request_target), never the pull request's own code.
+# The pull request's files are only read as data. Read-only token, no secrets.
+# Make "content-guard" a required status check in the `main` ruleset so a failing pull request cannot be merged.
+name: Content guard
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened, ready_for_review]
+permissions:
+  contents: read
+  pull-requests: read
+jobs:
+  content-guard:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - name: List the changed files
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR: ${{ github.event.pull_request.number }}
+        run: gh api --paginate "repos/$REPO/pulls/$PR/files" --jq '.[] | [.status, .filename] | @tsv' > "$RUNNER_TEMP/changes.tsv"
+      - name: Copy the pull request's files (data only, nothing is run)
+        env:
+          REPO: ${{ github.repository }}
+          PR: ${{ github.event.pull_request.number }}
+        run: |
+          git fetch --no-tags --depth=1 "https://github.com/$REPO.git" "pull/$PR/head:refs/guard/pr"
+          mkdir -p "$RUNNER_TEMP/pr"
+          while IFS=$'\t' read -r status file; do
+            [ "$status" = "removed" ] && continue
+            mkdir -p "$RUNNER_TEMP/pr/$(dirname -- "$file")"
+            git show "refs/guard/pr:$file" > "$RUNNER_TEMP/pr/$file"
+          done < "$RUNNER_TEMP/changes.tsv"
+      - name: Check
+        env:
+          AUTHOR: ${{ github.event.pull_request.user.login }}
+        run: node scripts/content-guard.mjs "$AUTHOR" "$RUNNER_TEMP/changes.tsv" "$RUNNER_TEMP/pr"
